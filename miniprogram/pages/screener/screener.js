@@ -14,6 +14,7 @@ Page({
     builderMetricName: '',
     builderOperator: '>=',
     builderValue: '',
+    builderUnit: '',
     builderYears: 1,
     showMetricList: false,
 
@@ -99,6 +100,7 @@ Page({
       this.setData({
         builderMetric: item.field,
         builderMetricName: item.chinese_name,
+        builderUnit: item.unit || '',
         showMetricList: false,
       });
     }

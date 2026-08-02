@@ -56,8 +56,8 @@
     </view>
 
     <!-- 阈值 -->
-    <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">阈值</view>
-    <input class="value-input text-sm" type="digit" placeholder="输入数值" value="{{builderValue}}" bindinput="onValueInput" focus="{{inputFocus}}" />
+    <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">阈值<text wx:if="{{builderUnit}}">（{{builderUnit}}）</text></view>
+    <input class="value-input text-sm" type="digit" placeholder="{{builderUnit === '%' ? '如 0.15 = 15%' : builderUnit === '倍' ? '如 1.5' : '输入数值'}}" value="{{builderValue}}" bindinput="onValueInput" />
 
     <!-- 连续年数 -->
     <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">连续满足年数：{{builderYears}}</view>
