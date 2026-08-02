@@ -40,8 +40,9 @@ Component({
     fmtVal(v) {
       if (v == null) return '--';
       const n = Math.abs(v);
-      if (n >= 1e8) return (v / 1e8).toFixed(1) + '亿';
+      if (n >= 1e8) return (v / 1e8).toFixed(2) + '亿';
       if (n >= 1e4) return (v / 1e4).toFixed(1) + '万';
+      if (n < 1 && n !== 0) return (v * 100).toFixed(1) + '%';
       return v.toFixed(2);
     },
   },

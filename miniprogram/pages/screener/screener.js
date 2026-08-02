@@ -59,7 +59,11 @@ Page({
   loadIndicators() {
     api.getIndicators()
       .then((res) => {
-        const list = res.data || [];
+        let list = res.data || [];
+        list = list.map((i) => {
+          if (i.unit === '元') return { ...i, unit: '亿元' };
+          return i;
+        });
         this.setData({
           indicators: list,
           indicatorNames: list.map((i) => i.chinese_name + ' (' + i.unit + ')'),
@@ -77,9 +81,9 @@ Page({
           { field: 'debt_to_assets', chinese_name: '资产负债率', unit: '%', category: '偿债能力' },
           { field: 'current_ratio', chinese_name: '流动比率', unit: '倍', category: '偿债能力' },
           { field: 'quick_ratio', chinese_name: '速动比率', unit: '倍', category: '偿债能力' },
-          { field: 'fcf', chinese_name: '自由现金流(FCF)', unit: '元', category: '估值相关' },
-          { field: 'operating_revenue', chinese_name: '营业总收入', unit: '元', category: '利润表' },
-          { field: 'net_profit_attr_parent', chinese_name: '归母净利润', unit: '元', category: '利润表' },
+          { field: 'fcf', chinese_name: '自由现金流(FCF)', unit: '亿元', category: '估值相关' },
+          { field: 'operating_revenue', chinese_name: '营业总收入', unit: '亿元', category: '利润表' },
+          { field: 'net_profit_attr_parent', chinese_name: '归母净利润', unit: '亿元', category: '利润表' },
         ];
         this.setData({
           indicators: defaults,
@@ -129,10 +133,15 @@ Page({
       return;
     }
 
+    // 亿元 → 元 自动转换
+    let finalValue = parseFloat(builderValue);
+    if (this.data.builderUnit === '亿元') {
+      finalValue = finalValue * 1e8;
+    }
     const conditions = [...this.data.conditions, {
       metric: builderMetric,
       operator: builderOperator,
-      value: parseFloat(builderValue),
+      value: finalValue,
       consecutive_years: builderYears,
       _label: builderMetricName,
     }];
