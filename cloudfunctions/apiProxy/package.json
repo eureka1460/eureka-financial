@@ -1,0 +1,9 @@
+{
+  "name": "apiProxy",
+  "version": "1.0.0",
+  "description": "Eureka 后端 API 代理云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  }
+}

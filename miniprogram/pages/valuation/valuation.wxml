@@ -1,0 +1,178 @@
+<view class="page">
+  <!-- 股票代码输入 -->
+  <view class="card">
+    <text class="text-sm text-secondary">股票代码</text>
+    <input
+      class="symbol-input text-lg font-bold"
+      placeholder="输入代码如 600519"
+      value="{{symbol}}"
+      data-field="symbol"
+      bindinput="onDcfInput"
+    />
+  </view>
+
+  <!-- Tab -->
+  <view class="tab-bar">
+    <view
+      class="tab-item {{activeTab === 'dcf' ? 'active' : ''}}"
+      data-tab="dcf"
+      bindtap="onTabTap"
+    >DCF 自由现金流</view>
+    <view
+      class="tab-item {{activeTab === 'ddm' ? 'active' : ''}}"
+      data-tab="ddm"
+      bindtap="onTabTap"
+    >DDM 股利折现</view>
+  </view>
+
+  <!-- ═══ DCF ═══ -->
+  <view wx:if="{{activeTab === 'dcf'}}" class="tab-content">
+    <view class="card">
+      <text class="text-sm font-bold" style="margin-bottom: 20rpx; display: block;">模型参数（留空则自动填充）</text>
+
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">基期 FCF</text>
+        <input class="param-input text-sm" type="digit" placeholder="自动" value="{{dcfParams.fcf_base}}"
+               data-field="fcf_base" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">预测年数</text>
+        <input class="param-input text-sm" type="number" placeholder="5" value="{{dcfParams.forecast_years}}"
+               data-field="forecast_years" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">阶段一增长率</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.10" value="{{dcfParams.growth_rate_stage1}}"
+               data-field="growth_rate_stage1" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">永续增长率</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.03" value="{{dcfParams.growth_rate_terminal}}"
+               data-field="growth_rate_terminal" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">WACC</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.08" value="{{dcfParams.wacc}}"
+               data-field="wacc" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">净负债</text>
+        <input class="param-input text-sm" type="digit" placeholder="自动" value="{{dcfParams.net_debt}}"
+               data-field="net_debt" bindinput="onDcfInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">总股本</text>
+        <input class="param-input text-sm" type="digit" placeholder="自动" value="{{dcfParams.total_shares}}"
+               data-field="total_shares" bindinput="onDcfInput" />
+      </view>
+
+      <button class="btn btn-primary" style="width: 100%; margin-top: 20rpx;" bindtap="onCalcDCF" disabled="{{loading}}">
+        {{loading ? '计算中...' : '开始 DCF 估值'}}
+      </button>
+    </view>
+
+    <!-- DCF 结果 -->
+    <view wx:if="{{dcfDone}}" class="card result-card">
+      <view class="result-main">
+        <text class="text-xs text-secondary">每股内在价值</text>
+        <text class="text-2xl font-bold text-accent">{{dcfFairValue}}</text>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="flex justify-between" style="margin-bottom: 12rpx;">
+        <text class="text-sm text-secondary">企业价值</text>
+        <text class="text-sm font-medium">{{dcfEnterpriseValue}}</text>
+      </view>
+      <view class="flex justify-between" style="margin-bottom: 12rpx;">
+        <text class="text-sm text-secondary">股权价值</text>
+        <text class="text-sm font-medium">{{dcfEquityValue}}</text>
+      </view>
+      <view class="flex justify-between" style="margin-bottom: 12rpx;">
+        <text class="text-sm text-secondary">阶段一现值</text>
+        <text class="text-sm font-medium">{{dcfPvStage1}}</text>
+      </view>
+      <view class="flex justify-between">
+        <text class="text-sm text-secondary">终值现值</text>
+        <text class="text-sm font-medium">{{dcfPvTerminal}}</text>
+      </view>
+
+      <view class="divider"></view>
+
+      <text class="text-xs text-muted">参数来源：</text>
+      <text class="text-xs text-muted" style="white-space: pre-wrap; display: block; margin-top: 4rpx;">{{dcfInputParams}}</text>
+    </view>
+  </view>
+
+  <!-- ═══ DDM ═══ -->
+  <view wx:if="{{activeTab === 'ddm'}}" class="tab-content">
+    <view class="card">
+      <text class="text-sm font-bold" style="margin-bottom: 20rpx; display: block;">模型参数（留空则自动填充）</text>
+
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">基期每股股利</text>
+        <input class="param-input text-sm" type="digit" placeholder="自动" value="{{ddmParams.d0}}"
+               data-field="d0" bindinput="onDdmInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">预测年数</text>
+        <input class="param-input text-sm" type="number" placeholder="5" value="{{ddmParams.forecast_years}}"
+               data-field="forecast_years" bindinput="onDdmInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">阶段一增长率</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.08" value="{{ddmParams.growth_rate_stage1}}"
+               data-field="growth_rate_stage1" bindinput="onDdmInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">永续增长率</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.02" value="{{ddmParams.growth_rate_terminal}}"
+               data-field="growth_rate_terminal" bindinput="onDdmInput" />
+      </view>
+      <view class="param-row">
+        <text class="param-label text-sm text-secondary">要求回报率</text>
+        <input class="param-input text-sm" type="digit" placeholder="0.07" value="{{ddmParams.required_return}}"
+               data-field="required_return" bindinput="onDdmInput" />
+      </view>
+
+      <button class="btn btn-primary" style="width: 100%; margin-top: 20rpx;" bindtap="onCalcDDM" disabled="{{loading}}">
+        {{loading ? '计算中...' : '开始 DDM 估值'}}
+      </button>
+    </view>
+
+    <!-- DDM 结果 -->
+    <view wx:if="{{ddmDone}}" class="card result-card">
+      <view class="result-main">
+        <text class="text-xs text-secondary">每股内在价值</text>
+        <text class="text-2xl font-bold text-accent">{{ddmFairValue}}</text>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="flex justify-between" style="margin-bottom: 12rpx;">
+        <text class="text-sm text-secondary">阶段一现值</text>
+        <text class="text-sm font-medium">{{ddmPvStage1}}</text>
+      </view>
+      <view class="flex justify-between">
+        <text class="text-sm text-secondary">终值现值</text>
+        <text class="text-sm font-medium">{{ddmPvTerminal}}</text>
+      </view>
+
+      <view class="divider"></view>
+
+      <text class="text-xs text-muted">参数来源：</text>
+      <text class="text-xs text-muted" style="white-space: pre-wrap; display: block; margin-top: 4rpx;">{{ddmInputParams}}</text>
+    </view>
+  </view>
+
+  <!-- 错误 -->
+  <view wx:if="{{error}}" class="empty-state" style="margin-top: 32rpx;">
+    <text class="icon">⚠️</text>
+    <text class="text">{{error}}</text>
+  </view>
+
+  <!-- 底部说明 -->
+  <view class="disclaimer">
+    <text class="text-xs text-muted">⚠️ 估值结果仅供参考，不构成投资建议。</text>
+  </view>
+</view>

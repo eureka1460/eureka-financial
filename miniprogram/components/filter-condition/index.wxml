@@ -1,0 +1,6 @@
+<view class="filter-cond">
+  <text class="cond-text text-sm">{{display}}</text>
+  <view class="cond-remove" bind:tap="onRemove">
+    <text>×</text>
+  </view>
+</view>

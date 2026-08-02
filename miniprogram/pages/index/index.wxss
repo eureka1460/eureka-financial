@@ -1,0 +1,31 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+
+.industry-scroll {
+  white-space: nowrap;
+  padding: 0 var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.industry-list {
+  display: inline-flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+}
+
+.industry-list .tag {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  font-size: var(--font-sm);
+  transition: all 0.2s;
+}
+
+.result-header {
+  padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.stock-list {
+  padding-bottom: var(--spacing-xl);
+}

@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "stock-card": "/components/stock-card/index"
+  },
+  "navigationBarTitleText": "Eureka 财报研究",
+  "enablePullDownRefresh": true
+}

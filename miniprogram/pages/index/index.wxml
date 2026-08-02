@@ -1,0 +1,76 @@
+<view class="page">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <text class="icon">🔍</text>
+    <input
+      placeholder="搜索股票代码或名称..."
+      value="{{searchInput}}"
+      bindinput="onSearchInput"
+      bindconfirm="onSearchConfirm"
+      confirm-type="search"
+    />
+    <text
+      wx:if="{{searchInput}}"
+      class="icon"
+      bindtap="onClearSearch"
+    >✕</text>
+  </view>
+
+  <!-- 行业筛选标签 -->
+  <scroll-view class="industry-scroll" scroll-x="true">
+    <view class="industry-list">
+      <view
+        class="tag {{activeIndustry === '' ? 'tag-accent' : 'tag-neutral'}}"
+        data-industry=""
+        bindtap="onIndustryTap"
+      >全部</view>
+      <view
+        wx:for="{{industries}}"
+        wx:key="*this"
+        class="tag {{activeIndustry === item ? 'tag-accent' : 'tag-neutral'}}"
+        data-industry="{{item}}"
+        bindtap="onIndustryTap"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 结果统计 -->
+  <view class="result-header" wx:if="{{!initialLoading}}">
+    <text class="text-sm text-secondary">
+      {{keyword ? '搜索结果' : '共'}} {{total}} 只股票
+    </text>
+  </view>
+
+  <!-- 初始加载 -->
+  <view wx:if="{{initialLoading}}" class="loading-text">加载中...</view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{stocks.length === 0 && !loading}}" class="empty-state">
+    <text class="icon">📭</text>
+    <text class="text">
+      {{keyword ? '未找到匹配的股票' : '暂无数据，请先执行数据同步'}}
+    </text>
+  </view>
+
+  <!-- 股票列表 -->
+  <view wx:else class="stock-list">
+    <stock-card
+      wx:for="{{stocks}}"
+      wx:key="symbol"
+      stock="{{item}}"
+      bind:tap="onStockTap"
+    />
+  </view>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{loading}}" class="loading-text">加载中...</view>
+  <view wx:elif="{{!hasMore && stocks.length > 0}}" class="loading-text">
+    已加载全部 {{total}} 只
+  </view>
+
+  <!-- 错误提示 -->
+  <view wx:if="{{error}}" class="empty-state">
+    <text class="icon">⚠️</text>
+    <text class="text">后端服务暂不可用<br/>请检查后端部署状态</text>
+  </view>
+</view>

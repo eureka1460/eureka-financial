@@ -1,0 +1,29 @@
+.filter-cond {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: var(--color-accent-light);
+  border: 1rpx solid var(--color-accent);
+  border-radius: var(--radius-full);
+  padding: 6rpx 16rpx;
+  margin: 4rpx;
+}
+
+.cond-text {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.cond-remove {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--color-accent);
+  font-size: var(--font-lg);
+  line-height: 1;
+  margin-left: 4rpx;
+}

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "metric-bar": "/components/metric-bar/index"
+  },
+  "navigationBarTitleText": "股票详情"
+}

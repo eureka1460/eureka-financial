@@ -1,0 +1,82 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-surface);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* ── 股票代码 ─────────────────────── */
+.symbol-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  margin-top: 8rpx;
+  color: var(--color-accent);
+}
+
+/* ── Tab ─────────────────────────── */
+.tab-bar {
+  display: flex;
+  margin: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 4rpx;
+  box-shadow: var(--shadow-sm);
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.tab-item.active {
+  background: var(--color-accent);
+  color: #FFFFFF;
+}
+
+/* ── 参数表单 ─────────────────────── */
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1rpx solid var(--color-divider);
+}
+.param-row:last-of-type {
+  border-bottom: none;
+}
+.param-label {
+  flex-shrink: 0;
+  width: 200rpx;
+}
+.param-input {
+  flex: 1;
+  text-align: right;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  padding: 4rpx 0;
+}
+
+/* ── 结果 ─────────────────────────── */
+.result-card {
+  margin-top: var(--spacing-md);
+}
+.result-main {
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+.result-main .text-xs {
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+/* ── 免责声明 ─────────────────────── */
+.disclaimer {
+  padding: var(--spacing-lg);
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}

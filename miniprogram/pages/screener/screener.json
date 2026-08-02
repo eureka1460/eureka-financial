@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "stock-card": "/components/stock-card/index",
+    "filter-condition": "/components/filter-condition/index"
+  },
+  "navigationBarTitleText": "条件选股"
+}

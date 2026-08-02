@@ -1,0 +1,33 @@
+<view class="stock-card" bind:tap="onTap">
+  <!-- 左侧：代码 + 名称 -->
+  <view class="stock-info">
+    <view class="flex items-center gap-sm">
+      <text class="stock-name">{{stock.name || '--'}}</text>
+      <text class="tag tag-neutral">{{marketLabel}}{{stock.symbol}}</text>
+    </view>
+    <view class="stock-sub" wx:if="{{showIndustry && stock.industry}}">
+      <text class="text-secondary text-xs">{{stock.industry}}</text>
+    </view>
+  </view>
+
+  <!-- 右侧：核心指标 -->
+  <view class="stock-metrics">
+    <view class="metric-item" wx:if="{{roe !== '--'}}">
+      <text class="metric-label text-muted text-xs">ROE</text>
+      <text class="metric-value text-md font-bold text-up">{{roe}}</text>
+    </view>
+    <view class="metric-item" wx:if="{{grossMargin !== '--'}}">
+      <text class="metric-label text-muted text-xs">毛利率</text>
+      <text class="metric-value text-md font-medium">{{grossMargin}}</text>
+    </view>
+    <view class="metric-item" wx:if="{{profitYoY !== '--'}}">
+      <text class="metric-label text-muted text-xs">利润增速</text>
+      <text class="metric-value text-md font-medium {{profitYoYClass}}">{{profitYoY}}</text>
+    </view>
+  </view>
+
+  <!-- 箭头 -->
+  <view class="stock-arrow text-muted">
+    <text>›</text>
+  </view>
+</view>
