@@ -3,23 +3,23 @@
  */
 const api = require('../../utils/api');
 
-// 指标元数据缓存
-let indicatorsCache = [];
-
 Page({
   data: {
-    // 条件构建
     conditions: [],
     logic: 'AND',
     reportType: 'annual',
 
-    // 添加条件面板
-    showBuilder: false,
+    // 条件构建
     builderMetric: '',
+    builderMetricName: '',
     builderOperator: '>=',
     builderValue: '',
     builderYears: 1,
+    inputFocus: false,
+
+    // 指标列表
     indicators: [],
+    indicatorNames: [],
 
     // 结果
     results: [],
@@ -27,7 +27,6 @@ Page({
     page: 1,
     pageSize: 20,
 
-    // 状态
     loading: false,
     searched: false,
     error: '',
@@ -39,45 +38,47 @@ Page({
 
   // ── 指标列表 ──────────────────────────
   loadIndicators() {
-    if (indicatorsCache.length > 0) {
-      this.setData({ indicators: indicatorsCache });
-      return;
-    }
     api.getIndicators()
       .then((res) => {
-        indicatorsCache = res.data || [];
-        this.setData({ indicators: indicatorsCache });
+        const list = res.data || [];
+        this.setData({
+          indicators: list,
+          indicatorNames: list.map((i) => i.chinese_name + ' (' + i.unit + ')'),
+        });
       })
       .catch(() => {
-        // 使用默认指标
         const defaults = [
           { field: 'roe', chinese_name: '净资产收益率(ROE)', unit: '%', category: '盈利能力' },
+          { field: 'roa', chinese_name: '总资产收益率(ROA)', unit: '%', category: '盈利能力' },
           { field: 'gross_margin', chinese_name: '毛利率', unit: '%', category: '盈利能力' },
           { field: 'net_margin', chinese_name: '净利率', unit: '%', category: '盈利能力' },
+          { field: 'operating_margin', chinese_name: '营业利润率', unit: '%', category: '盈利能力' },
           { field: 'revenue_yoy', chinese_name: '营收同比增长率', unit: '%', category: '成长能力' },
           { field: 'net_profit_yoy', chinese_name: '归母净利润同比增长率', unit: '%', category: '成长能力' },
           { field: 'debt_to_assets', chinese_name: '资产负债率', unit: '%', category: '偿债能力' },
           { field: 'current_ratio', chinese_name: '流动比率', unit: '倍', category: '偿债能力' },
+          { field: 'quick_ratio', chinese_name: '速动比率', unit: '倍', category: '偿债能力' },
           { field: 'fcf', chinese_name: '自由现金流(FCF)', unit: '元', category: '估值相关' },
+          { field: 'operating_revenue', chinese_name: '营业总收入', unit: '元', category: '利润表' },
+          { field: 'net_profit_attr_parent', chinese_name: '归母净利润', unit: '元', category: '利润表' },
         ];
-        indicatorsCache = defaults;
-        this.setData({ indicators: defaults });
+        this.setData({
+          indicators: defaults,
+          indicatorNames: defaults.map((i) => i.chinese_name + ' (' + i.unit + ')'),
+        });
       });
   },
 
   // ── 条件构建 ──────────────────────────
-  onShowBuilder() {
-    this.setData({ showBuilder: true });
-  },
-
-  onHideBuilder() {
-    this.setData({ showBuilder: false });
-  },
-
   onPickMetric(e) {
-    const idx = e.currentTarget.dataset.index;
+    const idx = e.detail.value;
     const item = this.data.indicators[idx];
-    this.setData({ builderMetric: item.field });
+    if (item) {
+      this.setData({
+        builderMetric: item.field,
+        builderMetricName: item.chinese_name,
+      });
+    }
   },
 
   onPickOperator(e) {
@@ -93,34 +94,38 @@ Page({
   },
 
   onAddCondition() {
-    const { builderMetric, builderOperator, builderValue, builderYears } = this.data;
-    if (!builderMetric || builderValue === '') {
-      wx.showToast({ title: '请完善条件', icon: 'none' });
+    const { builderMetric, builderMetricName, builderOperator, builderValue, builderYears } = this.data;
+    if (!builderMetric) {
+      wx.showToast({ title: '请选择指标', icon: 'none' });
+      return;
+    }
+    if (builderValue === '' || isNaN(parseFloat(builderValue))) {
+      wx.showToast({ title: '请输入有效数值', icon: 'none' });
       return;
     }
 
-    const cond = {
+    const conditions = [...this.data.conditions, {
       metric: builderMetric,
       operator: builderOperator,
       value: parseFloat(builderValue),
       consecutive_years: builderYears,
-      _label: this.getMetricLabel(builderMetric),
-    };
+      _label: builderMetricName,
+    }];
 
-    const conditions = [...this.data.conditions, cond];
     this.setData({
       conditions,
-      showBuilder: false,
       builderValue: '',
       builderMetric: '',
+      builderMetricName: '',
       builderYears: 1,
     });
   },
 
   onRemoveCondition(e) {
     const idx = e.detail.index;
-    const conditions = this.data.conditions.filter((_, i) => i !== idx);
-    this.setData({ conditions });
+    this.setData({
+      conditions: this.data.conditions.filter((_, i) => i !== idx),
+    });
   },
 
   onToggleLogic() {
@@ -140,21 +145,18 @@ Page({
 
     this.setData({ loading: true, error: '', searched: true });
 
-    const request = {
+    api.searchScreener({
       conditions: this.data.conditions,
       logic: this.data.logic,
       report_type: this.data.reportType,
       page: 1,
       page_size: this.data.pageSize,
-    };
-
-    api.searchScreener(request)
+    })
       .then((res) => {
         const d = res.data || {};
         this.setData({
           results: d.items || [],
           total: d.total || 0,
-          page: 1,
           loading: false,
         });
       })
@@ -167,17 +169,7 @@ Page({
       });
   },
 
-  // ── 跳转 ──────────────────────────────
   onStockTap(e) {
-    const symbol = e.detail.symbol;
-    wx.navigateTo({
-      url: `/pages/stock/stock?symbol=${symbol}`,
-    });
-  },
-
-  // ── 获取指标中文名 ────────────────
-  getMetricLabel(field) {
-    const found = this.data.indicators.find((i) => i.field === field);
-    return found ? found.chinese_name : field;
+    wx.navigateTo({ url: `/pages/stock/stock?symbol=${e.detail.symbol}` });
   },
 });

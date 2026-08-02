@@ -1,0 +1,68 @@
+.chart-card {
+  margin: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-title {
+  display: block;
+  margin-bottom: var(--spacing-lg);
+}
+
+.chart-body {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 320rpx;
+  padding-bottom: 20rpx;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  max-width: 120rpx;
+}
+
+.yoy-tag {
+  font-size: 18rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+  white-space: nowrap;
+}
+.yoy-up { color: #22C55E; }
+.yoy-down { color: #EF4444; }
+.yoy-none { color: var(--color-text-muted); }
+
+.bar-wrap {
+  flex: 1;
+  width: 60%;
+  min-width: 40rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 4rpx 4rpx 0 0;
+  min-height: 4rpx;
+  transition: height 0.3s ease;
+}
+
+.bar-val {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-top: 8rpx;
+  white-space: nowrap;
+}
+
+.bar-year {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin-top: 4rpx;
+}

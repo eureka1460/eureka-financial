@@ -91,6 +91,11 @@
       </view>
     </view>
 
+    <!-- 历年趋势图表 -->
+    <history-chart title="营业收入（历年）" data="{{chartRevenue}}" unit="元" color="#3B82F6" />
+    <history-chart title="归母净利润（历年）" data="{{chartProfit}}" unit="元" color="#22C55E" />
+    <history-chart title="ROE（历年）" data="{{chartROE}}" unit="%" color="#8B5CF6" />
+
     <!-- 财务历史 -->
     <view class="card">
       <text class="text-md font-bold" style="margin-bottom: 16rpx; display: block;">财务历史</text>

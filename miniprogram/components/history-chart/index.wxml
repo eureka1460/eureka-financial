@@ -1,0 +1,22 @@
+<view class="chart-card" wx:if="{{bars.length > 0}}">
+  <text class="chart-title text-sm font-bold">{{title}}</text>
+
+  <view class="chart-body">
+    <view class="bar-col" wx:for="{{bars}}" wx:key="year">
+      <!-- 同比标签 -->
+      <text wx:if="{{item.yoyText}}" class="yoy-tag {{item.yoyDown ? 'yoy-down' : 'yoy-up'}}">{{item.yoyText}}</text>
+      <text wx:else class="yoy-tag yoy-none">--</text>
+
+      <!-- 柱子 -->
+      <view class="bar-wrap">
+        <view class="bar" style="height: {{item.height}}%; background: {{color}};"></view>
+      </view>
+
+      <!-- 绝对值 -->
+      <text class="bar-val">{{item.displayVal}}</text>
+
+      <!-- 年份 -->
+      <text class="bar-year">{{item.year}}</text>
+    </view>
+  </view>
+</view>

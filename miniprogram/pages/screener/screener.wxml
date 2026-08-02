@@ -1,19 +1,14 @@
 <view class="page">
-  <!-- ── 条件列表 ── -->
+  <!-- 已添加条件 -->
   <view class="card">
     <view class="flex justify-between items-center" style="margin-bottom: 16rpx;">
       <text class="text-md font-bold">筛选条件</text>
-      <view class="flex gap-sm items-center">
-        <text class="text-xs text-secondary">逻辑：</text>
-        <view
-          class="tag {{logic === 'AND' ? 'tag-accent' : 'tag-neutral'}}"
-          bindtap="onToggleLogic"
-        >{{logic === 'AND' ? '全部满足' : '任一满足'}}</view>
+      <view class="tag {{logic === 'AND' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleLogic">
+        {{logic === 'AND' ? 'AND（全部满足）' : 'OR（任一满足）'}}
       </view>
     </view>
 
-    <!-- 已添加条件 -->
-    <view class="cond-list" wx:if="{{conditions.length > 0}}">
+    <view wx:if="{{conditions.length > 0}}" class="cond-list">
       <filter-condition
         wx:for="{{conditions}}"
         wx:key="index"
@@ -24,114 +19,64 @@
       />
     </view>
     <view wx:else class="text-sm text-muted" style="padding: 20rpx 0; text-align: center;">
-      点击下方按钮添加筛选条件
+      添加至少一个筛选条件
     </view>
 
-    <!-- 报表类型 -->
     <view class="flex gap-sm" style="margin-top: 16rpx;">
       <text class="text-xs text-secondary">报表类型：</text>
-      <view
-        wx:for="{{['annual', 'q1', 'semi_annual', 'q3']}}"
-        wx:key="*this"
-        wx:for-item="rt"
-        class="tag {{reportType === rt ? 'tag-accent' : 'tag-neutral'}}"
-        data-type="{{rt}}"
-        bindtap="onPickReportType"
-      >{{rt === 'annual' ? '年报' : rt === 'q1' ? '一季报' : rt === 'semi_annual' ? '中报' : '三季报'}}</view>
+      <view wx:for="{{['annual','q1','semi_annual','q3']}}" wx:key="*this" wx:for-item="rt"
+        class="tag {{reportType === rt ? 'tag-accent' : 'tag-neutral'}}" data-type="{{rt}}" bindtap="onPickReportType">
+        {{rt === 'annual' ? '年报' : rt === 'q1' ? '一季报' : rt === 'semi_annual' ? '中报' : '三季报'}}</view>
     </view>
 
-    <!-- 添加 / 搜索 -->
-    <view class="flex gap-sm" style="margin-top: 20rpx;">
-      <button class="btn btn-outline flex-1 text-sm" bindtap="onShowBuilder">+ 添加条件</button>
-      <button class="btn btn-primary flex-1 text-sm" bindtap="onSearch">开始筛选</button>
-    </view>
+    <button class="btn btn-primary" style="width: 100%; margin-top: 20rpx;" bindtap="onSearch">开始筛选</button>
   </view>
 
-  <!-- ── 条件构建面板 ── -->
-  <view class="builder-overlay" wx:if="{{showBuilder}}" catchtap="onHideBuilder">
-    <view class="builder-panel" catchtap="">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">添加筛选条件</text>
+  <!-- 添加条件表单 -->
+  <view class="card">
+    <text class="text-sm font-bold" style="margin-bottom: 16rpx; display: block;">添加条件</text>
 
-      <!-- 指标选择 -->
-      <text class="text-sm text-secondary" style="margin-bottom: 8rpx; display: block;">选择指标</text>
-      <scroll-view scroll-y="true" class="indicator-picker">
-        <view
-          wx:for="{{indicators}}"
-          wx:key="field"
-          class="indicator-item {{builderMetric === item.field ? 'active' : ''}}"
-          data-index="{{index}}"
-          bindtap="onPickMetric"
-        >
-          <text class="text-sm">{{item.chinese_name}}</text>
-          <text class="text-xs text-muted">{{item.unit}}</text>
-        </view>
-      </scroll-view>
-
-      <!-- 运算符 -->
-      <text class="text-sm text-secondary" style="margin: 16rpx 0 8rpx; display: block;">运算符</text>
-      <view class="flex gap-sm">
-        <view
-          wx:for="{{['>=', '>', '<=', '<', '==', '!=']}}"
-          wx:key="*this"
-          wx:for-item="op"
-          class="tag {{builderOperator === op ? 'tag-accent' : 'tag-neutral'}}"
-          data-op="{{op}}"
-          bindtap="onPickOperator"
-        >{{op === '>=' ? '≥' : op === '<=' ? '≤' : op === '==' ? '=' : op === '!=' ? '≠' : op}}</view>
+    <!-- 指标 -->
+    <view class="form-label text-xs text-secondary">选择指标</view>
+    <picker mode="selector" range="{{indicatorNames}}" bindchange="onPickMetric">
+      <view class="picker-display text-sm">
+        {{builderMetricName || '请选择指标'}}
+        <text class="text-muted" style="float:right;">▼</text>
       </view>
+    </picker>
 
-      <!-- 数值 -->
-      <text class="text-sm text-secondary" style="margin: 16rpx 0 8rpx; display: block;">阈值</text>
-      <input
-        class="value-input"
-        type="digit"
-        placeholder="输入数值..."
-        value="{{builderValue}}"
-        bindinput="onValueInput"
-      />
-
-      <!-- 连续年数 -->
-      <text class="text-sm text-secondary" style="margin: 16rpx 0 8rpx; display: block;">连续满足年数：{{builderYears}}</text>
-      <slider
-        min="1" max="10" step="1"
-        value="{{builderYears}}"
-        bindchange="onYearsChange"
-        show-value="{{false}}"
-        activeColor="#3B82F6"
-      />
-
-      <view class="flex gap-sm" style="margin-top: 24rpx;">
-        <button class="btn btn-outline flex-1 text-sm" bindtap="onHideBuilder">取消</button>
-        <button class="btn btn-primary flex-1 text-sm" bindtap="onAddCondition">确认添加</button>
-      </view>
+    <!-- 运算符 -->
+    <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">运算符</view>
+    <view class="flex gap-sm" style="margin-top: 8rpx;">
+      <view wx:for="{{['>=', '<=', '>', '<', '==']}}" wx:key="*this" wx:for-item="op"
+        class="tag {{builderOperator === op ? 'tag-accent' : 'tag-neutral'}}" data-op="{{op}}" bindtap="onPickOperator">
+        {{op === '>=' ? '≥' : op === '<=' ? '≤' : op === '==' ? '=' : op}}</view>
     </view>
+
+    <!-- 阈值 -->
+    <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">阈值</view>
+    <input class="value-input text-sm" type="digit" placeholder="输入数值" value="{{builderValue}}" bindinput="onValueInput" focus="{{inputFocus}}" />
+
+    <!-- 连续年数 -->
+    <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">连续满足年数：{{builderYears}}</view>
+    <slider min="1" max="5" value="{{builderYears}}" bindchange="onYearsChange" show-value activeColor="#3B82F6" block-size="16" />
+
+    <button class="btn btn-outline" style="width: 100%; margin-top: 20rpx;" bindtap="onAddCondition">+ 确认添加条件</button>
   </view>
 
-  <!-- ── 结果统计 ── -->
-  <view class="result-header" wx:if="{{searched && !loading}}">
-    <text class="text-sm text-secondary">
-      共筛选出 <text class="font-bold text-accent">{{total}}</text> 只股票
-    </text>
-  </view>
-
-  <!-- ── 结果列表 ── -->
+  <!-- 结果 -->
   <view wx:if="{{loading}}" class="loading-text">筛选中...</view>
-
-  <view wx:elif="{{searched && results.length === 0 && !loading}}" class="empty-state">
-    <text class="icon">🔍</text>
-    <text class="text">没有符合条件的股票<br/>试试放宽筛选条件</text>
+  <view wx:elif="{{searched}}">
+    <view class="result-header">
+      <text class="text-sm text-secondary">筛选出 <text class="text-accent font-bold">{{total}}</text> 只股票</text>
+    </view>
+    <view wx:if="{{results.length === 0}}" class="empty-state">
+      <text class="icon">🔍</text>
+      <text class="text">没有符合条件的股票</text>
+    </view>
+    <stock-card wx:for="{{results}}" wx:key="symbol" stock="{{item}}" bind:tap="onStockTap" />
   </view>
 
-  <view wx:else class="result-list">
-    <stock-card
-      wx:for="{{results}}"
-      wx:key="symbol"
-      stock="{{item}}"
-      bind:tap="onStockTap"
-    />
-  </view>
-
-  <!-- 错误 -->
   <view wx:if="{{error}}" class="empty-state">
     <text class="icon">⚠️</text>
     <text class="text">{{error}}</text>

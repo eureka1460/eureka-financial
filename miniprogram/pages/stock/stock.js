@@ -21,6 +21,11 @@ Page({
     historyLoading: false,
     historyError: '',
 
+    // 图表数据
+    chartRevenue: [],
+    chartProfit: [],
+    chartROE: [],
+
     // 指标展示
     roe: '--',
     roa: '--',
@@ -46,6 +51,7 @@ Page({
     if (symbol) {
       this.loadDetail();
       this.loadHistory();
+      this.loadChartData();
     }
   },
 
@@ -134,8 +140,23 @@ Page({
     wx.switchTab({ url: '/pages/screener/screener' });
   },
 
+  // ── 图表数据 ──────────────────────────
+  loadChartData() {
+    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
+      .then((res) => {
+        const items = (res.data || []).reverse(); // 按年份升序
+        this.setData({
+          chartRevenue: items.map((r) => ({ year: r.fiscal_year, value: r.operating_revenue, yoy: r.revenue_yoy, label: '营收' })),
+          chartProfit: items.map((r) => ({ year: r.fiscal_year, value: r.net_profit_attr_parent, yoy: r.net_profit_yoy, label: '利润' })),
+          chartROE: items.map((r) => ({ year: r.fiscal_year, value: r.roe, yoy: null, label: 'ROE' })),
+        });
+      })
+      .catch(() => {});
+  },
+
   onRetry() {
     this.loadDetail();
     this.loadHistory();
+    this.loadChartData();
   },
 });
