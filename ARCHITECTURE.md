@@ -7,47 +7,80 @@
 > - `开发流程与进度核验文档.md` — 进度追踪（做到哪了）
 > - `ARCHITECTURE.md` — 代码地图（每个文件干什么的）
 
-> **最后更新**：2026-07-30（阶段 1-5 完成）
+> **最后更新**：2026-08-02（阶段 1-5 + 前端开发完成）
 
 ---
 
 ## 一、项目全景
 
 ```
-D:\尤里卡\
-├── 系统架构与后端 PRD 文档.md          ← 需求与详细设计，开发前先读这个
-├── 开发流程与进度核验文档.md            ← 进度清单，切换 AI 时先看这个
+eureka投研/
+├── README.md                            ← 项目介绍
 ├── ARCHITECTURE.md                      ← 本文档，代码地图
-└── backend/                             ← 后端项目根目录
-    ├── requirements.txt                 ← Python 依赖清单
-    ├── .gitignore                       ← Git 忽略规则
-    ├── app/                             ← 应用代码（核心）
-    │   ├── main.py                      ← 启动入口
-    │   ├── core/                        ← 基础设施层
-    │   │   ├── config.py                ← 全局配置
-    │   │   ├── database.py              ← 数据库连接
-    │   │   └── exceptions.py            ← 自定义异常
-    │   ├── models/                      ← ORM 数据模型层
-    │   │   ├── stocks.py                ← 股票信息表
-    │   │   ├── financials.py            ← 财务报表宽表 ★
-    │   │   ├── indicators.py            ← 计算指标表
-    │   │   └── sync.py                  ← 同步日志 + 披露日历
-    │   ├── schemas/                     ← API 请求/响应模型层（待开发）
-    │   ├── services/                    ← 业务逻辑层
-    │   │   └── etl/                     ← ETL 数据抓取（待开发）
-    │   │       ├── fetcher.py           ←   抓取器
-    │   │       ├── cleaner.py           ←   清洗器
-    │   │       ├── loader.py            ←   入库器
-    │   │       ├── scheduler.py         ←   编排器
-    │   │       └── column_mapping.py    ←   列名映射
-    │   ├── routers/                     ← API 路由层（待开发）
-    │   └── utils/                       ← 工具函数层（待开发）
-    ├── scripts/                         ← 手动执行脚本
-    │   └── init_db.py                   ←   建表 + 预置数据
-    ├── data/                            ← 运行时数据（不提交 Git）
-    │   ├── eureka.db                    ←   SQLite 数据库文件
-    │   └── cache/                       ←   diskcache 缓存目录
-    └── tests/                           ← 测试代码（待开发）
+├── Dockerfile                           ← 云托管部署配置
+├── project.config.json                  ← 微信小程序配置
+├── 系统架构与后端 PRD 文档.md            ← 需求与详细设计
+├── 开发流程与进度核验文档.md              ← 进度清单
+│
+├── backend/                             ← Python FastAPI 后端
+│   ├── Dockerfile                       ← 云托管构建
+│   ├── requirements.txt                 ← Python 依赖
+│   ├── app/
+│   │   ├── main.py                      ← 启动入口 + 异常处理
+│   │   ├── core/                        ← 基础设施层
+│   │   │   ├── config.py                ← 30+ 配置项
+│   │   │   ├── database.py              ← SQLite (WAL) + Session
+│   │   │   └── exceptions.py            ← 6 个业务异常
+│   │   ├── models/                      ← ORM 模型（4 表）
+│   │   │   ├── stocks.py                ← 股票信息 (10 字段)
+│   │   │   ├── financials.py            ← 财报宽表 (77 字段) ★
+│   │   │   ├── indicators.py            ← 计算指标 (29 字段)
+│   │   │   └── sync.py                  ← 同步日志 + 披露日历
+│   │   ├── schemas/                     ← Pydantic 模型 ✅
+│   │   │   ├── common.py                ← APIResponse + 分页
+│   │   │   ├── stocks.py                ← StockSummary + Detail
+│   │   │   ├── financials.py            ← FinancialRecord
+│   │   │   ├── screener.py              ← FilterCondition
+│   │   │   └── valuation.py             ← DCF/DDM 请求/响应
+│   │   ├── services/                    ← 业务逻辑 ✅
+│   │   │   ├── etl/                     ← ETL 数据抓取
+│   │   │   │   ├── fetcher.py           ←   四层防御抓取
+│   │   │   │   ├── cleaner.py           ←   六步清洗
+│   │   │   │   ├── loader.py            ←   upsert + 指标计算
+│   │   │   │   ├── scheduler.py         ←   全量/增量编排
+│   │   │   │   └── column_mapping.py    ←   80+ 列名映射
+│   │   │   ├── screener.py              ← 条件筛选引擎
+│   │   │   └── valuation.py             ← DCF + DDM 估值
+│   │   ├── routers/                     ← API 路由 ✅ (9 接口)
+│   │   │   ├── stocks.py                ← 股票列表 + 详情
+│   │   │   ├── financials.py            ← 财务历史 + 指标元数据
+│   │   │   ├── data.py                  ← 数据同步 + 测试注入
+│   │   │   ├── screener.py              ← 条件选股
+│   │   │   └── valuation.py             ← DCF + DDM
+│   │   └── utils/                       ← 工具函数
+│   ├── scripts/
+│   │   ├── init_db.py                   ← 建表 + 预置日历
+│   │   └── run_etl.py                   ← 命令行 ETL
+│   ├── data/                            ← 运行时（不提交 Git）
+│   └── tests/                           ← 测试（待补）
+│
+├── miniprogram/                         ← 微信小程序前端
+│   ├── app.js / app.json / app.wxss     ← 应用入口 + 设计系统
+│   ├── utils/
+│   │   ├── api.js                       ← 9 个 API 封装
+│   │   └── format.js                    ← 数字格式化
+│   ├── components/
+│   │   ├── stock-card/                  ← 股票卡片
+│   │   ├── metric-bar/                  ← 指标进度条
+│   │   └── filter-condition/            ← 筛选条件标签
+│   └── pages/
+│       ├── index/                       ← 首页搜索 + 列表
+│       ├── stock/                       ← 详情 + 财务历史
+│       ├── screener/                    ← 条件选股
+│       └── valuation/                   ← DCF/DDM 估值
+│
+└── cloudfunctions/                      ← 微信云函数
+    └── apiProxy/                        ← API 代理（小程序→后端）
 ```
 
 ---
@@ -367,68 +400,38 @@ python scripts/run_etl.py --symbols 600519 --dry-run   # 调试：只抓不存
 
 ---
 
-## 四、当前文件清单（阶段 1 + 2 + 3 完成时）
+## 四、当前文件清单（阶段 1-5 + 前端开发 完成时）
 
 ```
-backend/
-├── requirements.txt           ✅
-├── .gitignore                 ✅
-├── app/
-│   ├── __init__.py            ✅
-│   ├── main.py                ✅ FastAPI 入口 + CORS + 5 路由模块
-│   ├── core/
-│   │   ├── __init__.py        ✅
-│   │   ├── config.py          ✅ 30+ 配置项
-│   │   ├── database.py        ✅ SQLAlchemy 引擎 (WAL) + Session
-│   │   └── exceptions.py      ✅ 6 个业务异常类
-│   ├── models/
-│   │   ├── __init__.py        ✅
-│   │   ├── stocks.py          ✅ 10 字段
-│   │   ├── financials.py      ✅ 77 字段 (核心宽表)
-│   │   ├── indicators.py      ✅ 29 字段 (计算指标)
-│   │   └── sync.py            ✅ SyncLog + ReportingCalendar
-│   ├── schemas/
-│   │   ├── __init__.py        ✅
-│   │   ├── common.py          ✅ APIResponse + PaginatedData
-│   │   ├── stocks.py          ✅ StockSummary + StockDetail
-│   │   ├── financials.py      ✅ FinancialRecord + IndicatorMeta
-│   │   ├── screener.py        ✅ FilterCondition + ScreenerRequest
-│   │   └── valuation.py       ✅ DCF/DDM Request + Response
-│   ├── services/
-│   │   ├── __init__.py        ✅
-│   │   ├── etl/
-│   │   │   ├── __init__.py    ✅
-│   │   │   ├── column_mapping.py ✅ 80+ 条 akshare 列名映射
-│   │   │   ├── fetcher.py     ✅ 四层防御 + 单季度数据抓取
-│   │   │   ├── cleaner.py     ✅ 六步清洗 + 三表合并
-│   │   │   ├── loader.py      ✅ upsert + 年报指标计算(四季汇总)
-│   │   │   └── scheduler.py   ✅ 全量/增量同步编排
-│   │   ├── screener.py        ✅ 条件解析 + SQL编译 + 连续N年
-│   │   └── valuation.py       ✅ DCF/DDM 两阶段 + 自动填充
-│   ├── routers/
-│   │   ├── __init__.py        ✅
-│   │   ├── stocks.py          ✅ 股票列表 + 详情
-│   │   ├── financials.py      ✅ 财务历史 + 指标列表
-│   │   ├── data.py            ✅ 同步触发 + 状态
-│   │   ├── screener.py        ✅ 多条件选股
-│   │   └── valuation.py       ✅ DCF + DDM 估值
-│   └── utils/
-│       └── __init__.py        ✅ (空)
-├── scripts/
-│   ├── init_db.py             ✅ 建表 + 预置财报日历
-│   └── run_etl.py             ✅ 命令行 ETL 工具
-├── data/
-│   └── .gitkeep               ✅
-└── tests/
-    └── __init__.py            ✅ (空)
+eureka投研/
+├── README.md                   ✅
+├── Dockerfile                  ✅ 云托管部署
+├── .gitignore                  ✅
+├── project.config.json         ✅
+├── project.private.config.json ✅
+├── backend/
+│   ├── Dockerfile              ✅
+│   ├── requirements.txt        ✅
+│   ├── .gitignore              ✅
+│   ├── app/
+│   │   ├── main.py             ✅ 11 路由 + 7 异常处理
+│   │   ├── core/               ✅ config / database / exceptions
+│   │   ├── models/             ✅ 4 模型 (5 表, 132 字段)
+│   │   ├── schemas/            ✅ 5 模块 (12 个 Pydantic 模型)
+│   │   ├── services/
+│   │   │   ├── etl/            ✅ 5 模块 (抓取/清洗/入库/编排/映射)
+│   │   │   ├── screener.py     ✅ 多条件筛选引擎
+│   │   │   └── valuation.py    ✅ DCF + DDM 两阶段
+│   │   ├── routers/            ✅ 5 模块 (9 接口)
+│   │   └── utils/              ✅
+│   ├── scripts/                ✅ init_db / run_etl
+│   ├── data/                   ✅
+│   └── tests/                  ⏳ 待补
+├── miniprogram/
+│   ├── app.*                   ✅ 入口 + 设计系统 (CSS 变量)
+│   ├── utils/                  ✅ api封装 / 格式化
+│   ├── components/             ✅ 3 个复用组件
+│   └── pages/                  ✅ 4 个业务页面
+└── cloudfunctions/
+    └── apiProxy/               ✅ API 代理 (Node.js 原生)
 ```
-
----
-
-> **下一阶段（阶段 4）新增文件**：
-> - `app/schemas/common.py` — 通用响应包装 (APIResponse, PaginatedData)
-> - `app/schemas/stocks.py` — 股票相关 Pydantic 模型
-> - `app/schemas/financials.py` — 财务数据 Pydantic 模型
-> - `app/routers/stocks.py` — 股票查询 API
-> - `app/routers/financials.py` — 财务数据 API
-> - `app/routers/data.py` — 数据同步 API
