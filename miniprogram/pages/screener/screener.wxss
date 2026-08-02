@@ -13,13 +13,21 @@
   margin-bottom: 6rpx;
 }
 
-.picker-display {
-  padding: var(--spacing-sm) var(--spacing-md);
+.metric-list {
   border: 1rpx solid var(--color-border);
   border-radius: var(--radius-sm);
-  color: var(--color-text);
-  line-height: 1.6;
+  max-height: 360rpx;
+  overflow-y: auto;
+  margin-top: 8rpx;
 }
+.metric-opt {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1rpx solid var(--color-divider);
+}
+.metric-opt:last-child { border-bottom: none; }
+.metric-opt.active { background: var(--color-accent-light); }
 
 .value-input {
   border: 1rpx solid var(--color-border);

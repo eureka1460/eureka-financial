@@ -12,18 +12,21 @@
 Component({
   properties: {
     label: String,
-    value: {
-      type: Number,
-      value: 0,
-    },
+    value: { type: Number, value: 0 },
     showValue: String,
-    max: {
-      type: Number,
-      value: 0.5,
-    },
-    color: {
-      type: String,
-      value: 'var(--color-accent)',
+    max: { type: Number, value: 0.5 },
+    color: { type: String, value: 'var(--color-accent)' },
+    field: { type: String, value: '' },
+  },
+
+  methods: {
+    onTap() {
+      if (this.data.field) {
+        this.triggerEvent('tapmetric', {
+          field: this.data.field,
+          name: this.data.label,
+        });
+      }
     },
   },
 

@@ -15,7 +15,7 @@ Page({
     builderOperator: '>=',
     builderValue: '',
     builderYears: 1,
-    inputFocus: false,
+    showMetricList: false,
 
     // 指标列表（有默认值，页面加载即能用）
     indicators: [
@@ -88,13 +88,18 @@ Page({
   },
 
   // ── 条件构建 ──────────────────────────
+  onToggleMetricList() {
+    this.setData({ showMetricList: !this.data.showMetricList });
+  },
+
   onPickMetric(e) {
-    const idx = e.detail.value;
+    const idx = e.currentTarget.dataset.idx;
     const item = this.data.indicators[idx];
     if (item) {
       this.setData({
         builderMetric: item.field,
         builderMetricName: item.chinese_name,
+        showMetricList: false,
       });
     }
   },

@@ -27,11 +27,11 @@
     <!-- 盈利能力指标 -->
     <view class="card">
       <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">盈利能力</text>
-      <metric-bar label="净资产收益率 (ROE)" value="{{financial.roe || 0}}" showValue="{{roe}}" max="{{0.5}}" color="#3B82F6" />
-      <metric-bar label="总资产收益率 (ROA)" value="{{financial.roa || 0}}" showValue="{{roa}}" max="{{0.3}}" color="#6366F1" />
-      <metric-bar label="毛利率" value="{{financial.gross_margin || 0}}" showValue="{{grossMargin}}" max="{{0.8}}" color="#8B5CF6" />
-      <metric-bar label="净利率" value="{{financial.net_margin || 0}}" showValue="{{netMargin}}" max="{{0.5}}" color="#A855F7" />
-      <metric-bar label="营业利润率" value="{{financial.operating_margin || 0}}" showValue="{{operatingMargin}}" max="{{0.5}}" color="#EC4899" />
+      <metric-bar label="净资产收益率 (ROE)" field="roe" value="{{financial.roe || 0}}" showValue="{{roe}}" max="{{0.5}}" color="#3B82F6" bind:tapmetric="onTapMetric" />
+      <metric-bar label="总资产收益率 (ROA)" field="roa" value="{{financial.roa || 0}}" showValue="{{roa}}" max="{{0.3}}" color="#6366F1" bind:tapmetric="onTapMetric" />
+      <metric-bar label="毛利率" field="gross_margin" value="{{financial.gross_margin || 0}}" showValue="{{grossMargin}}" max="{{0.8}}" color="#8B5CF6" bind:tapmetric="onTapMetric" />
+      <metric-bar label="净利率" field="net_margin" value="{{financial.net_margin || 0}}" showValue="{{netMargin}}" max="{{0.5}}" color="#A855F7" bind:tapmetric="onTapMetric" />
+      <metric-bar label="营业利润率" field="operating_margin" value="{{financial.operating_margin || 0}}" showValue="{{operatingMargin}}" max="{{0.5}}" color="#EC4899" bind:tapmetric="onTapMetric" />
     </view>
 
     <!-- 成长能力 -->
@@ -55,40 +55,49 @@
     <!-- 偿债与流动性 -->
     <view class="card">
       <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">偿债与流动性</text>
-      <metric-bar label="流动比率" value="{{financial.current_ratio || 0}}" showValue="{{currentRatio}}" max="{{3}}" color="#10B981" />
-      <metric-bar label="速动比率" value="{{financial.quick_ratio || 0}}" showValue="{{quickRatio}}" max="{{2}}" color="#14B8A6" />
-      <metric-bar label="资产负债率" value="{{financial.debt_to_assets || 0}}" showValue="{{debtToAssets}}" max="{{0.8}}" color="#F59E0B" />
+      <metric-bar label="流动比率" field="current_ratio" value="{{financial.current_ratio || 0}}" showValue="{{currentRatio}}" max="{{3}}" color="#10B981" bind:tapmetric="onTapMetric" />
+      <metric-bar label="速动比率" field="quick_ratio" value="{{financial.quick_ratio || 0}}" showValue="{{quickRatio}}" max="{{2}}" color="#14B8A6" bind:tapmetric="onTapMetric" />
+      <metric-bar label="资产负债率" field="debt_to_assets" value="{{financial.debt_to_assets || 0}}" showValue="{{debtToAssets}}" max="{{0.8}}" color="#F59E0B" bind:tapmetric="onTapMetric" />
     </view>
 
     <!-- 核心数据 -->
     <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">核心数据</text>
+      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">核心数据（点击查看历年图表）</text>
       <view class="snapshot-grid">
-        <view class="snap-item">
-          <text class="text-xs text-secondary">总资产</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="total_assets" data-name="总资产">
+          <text class="text-xs text-secondary">总资产 📊</text>
           <text class="text-base font-bold">{{totalAssets}}</text>
         </view>
-        <view class="snap-item">
-          <text class="text-xs text-secondary">净资产</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="total_equity" data-name="净资产">
+          <text class="text-xs text-secondary">净资产 📊</text>
           <text class="text-base font-bold">{{totalEquity}}</text>
         </view>
-        <view class="snap-item">
-          <text class="text-xs text-secondary">营业收入</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="operating_revenue" data-name="营业收入">
+          <text class="text-xs text-secondary">营业收入 📊</text>
           <text class="text-base font-bold">{{operatingRevenue}}</text>
         </view>
-        <view class="snap-item">
-          <text class="text-xs text-secondary">归母净利润</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="net_profit_attr_parent" data-name="归母净利润">
+          <text class="text-xs text-secondary">归母净利润 📊</text>
           <text class="text-base font-bold">{{netProfit}}</text>
         </view>
-        <view class="snap-item">
-          <text class="text-xs text-secondary">自由现金流</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="fcf" data-name="自由现金流">
+          <text class="text-xs text-secondary">自由现金流 📊</text>
           <text class="text-base font-bold">{{fcf}}</text>
         </view>
-        <view class="snap-item">
-          <text class="text-xs text-secondary">每股净资产</text>
+        <view class="snap-item" bindtap="onTapMetric" data-field="book_value_per_share" data-name="每股净资产">
+          <text class="text-xs text-secondary">每股净资产 📊</text>
           <text class="text-base font-bold">{{bookValuePerShare}}</text>
         </view>
       </view>
+    </view>
+
+    <!-- 点击指标弹出的图表 -->
+    <view wx:if="{{chartMetricName}}" class="card" style="margin-top: var(--spacing-md);">
+      <view class="flex justify-between items-center" style="margin-bottom: 16rpx;">
+        <text class="text-md font-bold">{{chartMetricName}} 历年趋势</text>
+        <text class="text-sm text-accent" bindtap="onHideMetricChart">关闭 ✕</text>
+      </view>
+      <history-chart title="{{chartMetricName}}" data="{{chartMetricData}}" unit="" color="#F59E0B" />
     </view>
 
     <!-- 历年趋势图表（可折叠） -->

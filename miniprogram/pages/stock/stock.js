@@ -27,6 +27,10 @@ Page({
     chartROE: [],
     showCharts: false,
 
+    // 点击指标弹出图表
+    chartMetricName: '',
+    chartMetricData: [],
+
     // 指标展示
     roe: '--',
     roa: '--',
@@ -157,6 +161,28 @@ Page({
 
   onToggleCharts() {
     this.setData({ showCharts: !this.data.showCharts });
+  },
+
+  // 点击指标查看历年图表
+  onTapMetric(e) {
+    const field = e.currentTarget.dataset.field;
+    const name = e.currentTarget.dataset.name;
+    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
+      .then((res) => {
+        const items = (res.data || []).reverse();
+        const data = items.map((r) => ({
+          year: r.fiscal_year,
+          value: r[field] != null ? r[field] : 0,
+          yoy: null,
+          label: name,
+        }));
+        this.setData({ chartMetricName: name, chartMetricData: data });
+      })
+      .catch(() => {});
+  },
+
+  onHideMetricChart() {
+    this.setData({ chartMetricName: '', chartMetricData: [] });
   },
 
   onRetry() {

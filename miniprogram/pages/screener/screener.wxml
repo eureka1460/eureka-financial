@@ -37,13 +37,15 @@
     <text class="text-sm font-bold" style="margin-bottom: 16rpx; display: block;">添加条件</text>
 
     <!-- 指标 -->
-    <view class="form-label text-xs text-secondary">选择指标</view>
-    <picker mode="selector" range="{{indicatorNames}}" bindchange="onPickMetric">
-      <view class="picker-display text-sm">
-        {{builderMetricName || '请选择指标'}}
-        <text class="text-muted" style="float:right;">▼</text>
+    <view class="form-label text-xs text-secondary" bindtap="onToggleMetricList">选择指标：{{builderMetricName || '点击选择'}} ▼</view>
+    <view wx:if="{{showMetricList}}" class="metric-list">
+      <view wx:for="{{indicators}}" wx:key="field"
+        class="metric-opt {{builderMetric === item.field ? 'active' : ''}}"
+        data-idx="{{index}}" bindtap="onPickMetric">
+        <text class="text-sm">{{item.chinese_name}}</text>
+        <text class="text-xs text-muted">{{item.unit}}</text>
       </view>
-    </picker>
+    </view>
 
     <!-- 运算符 -->
     <view class="form-label text-xs text-secondary" style="margin-top: 16rpx;">运算符</view>

@@ -1,4 +1,4 @@
-<view class="metric-bar">
+<view class="metric-bar" bindtap="onTap">
   <view class="bar-header flex justify-between">
     <text class="bar-label text-sm text-secondary">{{label}}</text>
     <text class="bar-value text-sm font-bold">{{showValue}}</text>
