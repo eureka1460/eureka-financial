@@ -4,5 +4,6 @@
   },
   "env": {
     "BACKEND_URL": "https://eurekabackend-290702-8-1462314987.sh.run.tcloudbase.com"
-  }
+  },
+  "timeout": 60
 }
