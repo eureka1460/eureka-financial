@@ -165,15 +165,26 @@ Page({
 
   // 点击指标查看历年图表
   onTapMetric(e) {
-    const field = e.currentTarget.dataset.field;
-    const name = e.currentTarget.dataset.name;
+    // 兼容两种事件来源：组件 tapmetric 事件 (e.detail) 和普通 bindtap (e.currentTarget.dataset)
+    const field = e.detail?.field || e.currentTarget.dataset.field;
+    const name = e.detail?.name || e.currentTarget.dataset.name;
+    if (!field) return;
+
+    // YoY 字段映射：指标字段 → 对应的同比增长字段
+    const yoyMap = {
+      operating_revenue: 'revenue_yoy',
+      net_profit_attr_parent: 'net_profit_yoy',
+      operating_profit: 'operating_profit_yoy',
+    };
+
     api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
       .then((res) => {
         const items = (res.data || []).reverse();
+        const yoyField = yoyMap[field] || null;
         const data = items.map((r) => ({
           year: r.fiscal_year,
-          value: r[field] != null ? r[field] : 0,
-          yoy: null,
+          value: r[field] != null ? Number(r[field]) : 0,
+          yoy: yoyField ? (r[yoyField] != null ? Number(r[yoyField]) : null) : null,
           label: name,
         }));
         this.setData({ chartMetricName: name, chartMetricData: data });
