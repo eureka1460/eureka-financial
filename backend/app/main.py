@@ -54,8 +54,18 @@ app.add_middleware(
 # ── 启动事件 ───────────────────────────────────────────────
 @app.on_event("startup")
 def on_startup():
-    """应用启动时自动创建数据库表（开发阶段，生产应使用 Alembic 迁移）。"""
+    """应用启动时自动创建数据库表，空库时注入测试数据。"""
     Base.metadata.create_all(bind=engine)
+    # 空库自动注入 mock 数据
+    from app.core.database import SessionLocal
+    from app.models.stocks import Stock
+    db = SessionLocal()
+    try:
+        if db.query(Stock).count() == 0:
+            from app.routers.data import seed_mock_data
+            seed_mock_data(db)
+    finally:
+        db.close()
 
 
 # ── 健康检查 ───────────────────────────────────────────────
