@@ -190,17 +190,19 @@ class DataLoader:
                 # 构建全年汇总（用四个季度之和）
                 annual_stmt = self._build_annual_from_quarters(s, quarters)
 
-                # 上年指标
+                # 上年指标（同时存 ORM 对象和年度汇总 dict）
                 prev_key = (fy - 1, "annual")
-                prev_annual_data = prev_map.get(prev_key)
+                prev_data = prev_map.get(prev_key)
+                prev_annual_stmt = prev_data["orm"] if prev_data else None
+                prev_annual_data = prev_data["annual"] if prev_data else None
 
                 indicators = self._compute_annual_indicators(
-                    annual_stmt, quarters, prev_annual_data
+                    annual_stmt, quarters, prev_annual_stmt, prev_annual_data
                 )
                 if indicators:
                     self._upsert_indicator(indicators)
-                    # 登记到 prev_map（存年度汇总值，用于次年 YoY）
-                    prev_map[(fy, "annual")] = annual_stmt
+                    # 登记到 prev_map：同时存 ORM 对象（用于资产负债表参考）和年度汇总（用于 P&L YoY）
+                    prev_map[(fy, "annual")] = {"orm": s, "annual": annual_stmt}
                     count += 1
             except Exception as e:
                 logger.error(f"{symbol} FY{s.fiscal_year} 指标计算失败: {e}")
@@ -261,13 +263,15 @@ class DataLoader:
         annual: dict,
         quarters: list,
         prev_annual_stmt,
+        prev_annual_data: dict = None,
     ) -> Optional[dict]:
         """用全年汇总数据计算年度衍生指标。
 
         Args:
             annual: _build_annual_from_quarters 返回的年度汇总 dict
-            quarters: 该财年所有季度报表列表（资产负债表取 Q4，利润表取汇总）
-            prev_annual_stmt: 上年年报的 FinancialStatement（用于 YoY）
+            quarters: 该财年所有季度报表列表
+            prev_annual_stmt: 上年年报的 FinancialStatement ORM 对象
+            prev_annual_data: 上年年度汇总 dict（用于 P&L / 现金流 YoY）
         """
         s = annual["stmt"]  # 年报 FinancialStatement
 
@@ -310,10 +314,10 @@ class DataLoader:
                 ind["operating_margin"] = op_profit / rev
 
         # ── 成长能力 ──
-        if prev_annual_stmt:
-            prev_rev = prev_annual_stmt.get("operating_revenue", 0) or 0
-            prev_profit = prev_annual_stmt.get("net_profit_attr_parent", 0) or 0
-            prev_op = prev_annual_stmt.get("operating_profit", 0) or 0
+        if prev_annual_data:
+            prev_rev = prev_annual_data.get("operating_revenue", 0) or 0
+            prev_profit = prev_annual_data.get("net_profit_attr_parent", 0) or 0
+            prev_op = prev_annual_data.get("operating_profit", 0) or 0
 
             if prev_rev > 0 and rev > 0:
                 ind["revenue_yoy"] = (rev - prev_rev) / prev_rev

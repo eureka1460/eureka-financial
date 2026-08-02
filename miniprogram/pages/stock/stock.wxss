@@ -8,6 +8,18 @@
 .stock-header {
   margin-top: var(--spacing-md);
 }
+.header-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+.header-meta {
+  display: flex;
+  margin-bottom: 20rpx;
+}
+.header-actions {
+  display: flex;
+}
 
 /* ── 成长能力 ─────────────────────────── */
 .growth-item {
