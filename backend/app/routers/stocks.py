@@ -78,15 +78,23 @@ def get_stock_detail(
     if not stock:
         raise StockNotFoundException(symbol)
 
-    # 查询最新一条计算指标
+    # 查询最新一条年报指标（年报才有完整的 YoY/ROA 等指标）
     latest_indicator = (
         db.query(FinancialIndicator)
-        .filter(FinancialIndicator.symbol == symbol)
+        .filter(FinancialIndicator.symbol == symbol, FinancialIndicator.report_type == "annual")
         .order_by(FinancialIndicator.report_date.desc())
         .first()
     )
+    # 如果没年报指标，降级取最新任意报表的指标
+    if not latest_indicator:
+        latest_indicator = (
+            db.query(FinancialIndicator)
+            .filter(FinancialIndicator.symbol == symbol)
+            .order_by(FinancialIndicator.report_date.desc())
+            .first()
+        )
 
-    # 查询最新一条原始财报（补足未在 indicator 中的字段）
+    # 查询最新一条原始财报
     latest_stmt = (
         db.query(FinancialStatement)
         .filter(FinancialStatement.symbol == symbol)
