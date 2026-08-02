@@ -155,15 +155,16 @@ def seed_mock_data(db: Session = Depends(get_db)):
     stmts_created = 0
     inds_created = 0
 
+    # 先创建股票（需要 commit 后才能关联外键）
     for stock_info in mock_stocks:
-        symbol = stock_info["symbol"]
-
-        # 创建股票
-        existing = db.query(Stock).filter(Stock.symbol == symbol).first()
+        existing = db.query(Stock).filter(Stock.symbol == stock_info["symbol"]).first()
         if not existing:
             db.add(Stock(**stock_info))
             stocks_created += 1
+    db.commit()
 
+    for stock_info in mock_stocks:
+        symbol = stock_info["symbol"]
         cfg = company_configs[symbol]
 
         for fy in years:
