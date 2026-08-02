@@ -293,14 +293,14 @@ class DataLoader:
         capex = annual["capital_expenditure"] or 0
 
         # ── 盈利能力 ──
-        if net_p_attr > 0 and s.total_equity:
+        if net_p_attr != 0 and s.total_equity:
             e1 = self._f(s.total_equity)
             e0 = self._f(prev_annual_stmt.total_equity) if prev_annual_stmt and prev_annual_stmt.total_equity else None
             avg_equity = (e1 + e0) / 2 if e0 else e1
             if avg_equity > 0:
                 ind["roe"] = net_p_attr / avg_equity
 
-        if net_p > 0 and s.total_assets:
+        if net_p != 0 and s.total_assets:
             a1 = self._f(s.total_assets)
             a0 = self._f(prev_annual_stmt.total_assets) if prev_annual_stmt and prev_annual_stmt.total_assets else None
             avg_assets = (a1 + a0) / 2 if a0 else a1
@@ -310,7 +310,7 @@ class DataLoader:
         if rev > 0:
             ind["gross_margin"] = (rev - cost) / rev
             ind["net_margin"] = net_p_attr / rev
-            if op_profit > 0:
+            if op_profit != 0:
                 ind["operating_margin"] = op_profit / rev
 
         # ── 成长能力 ──
@@ -340,8 +340,9 @@ class DataLoader:
         if s.total_liabilities and s.total_equity and s.total_equity > 0:
             ind["debt_to_equity"] = self._f(s.total_liabilities) / self._f(s.total_equity)
 
-        if s.interest_expense and op_profit > 0:
-            ind["interest_coverage"] = op_profit / self._f(s.interest_expense)
+        ie = self._f(s.interest_expense)
+        if ie and ie != 0 and op_profit != 0:
+            ind["interest_coverage"] = op_profit / abs(ie)
 
         # ── 营运效率 ──
         if rev > 0 and s.total_assets and s.total_assets > 0:
