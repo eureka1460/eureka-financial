@@ -170,23 +170,27 @@ Page({
     const name = e.detail?.name || e.currentTarget.dataset.name;
     if (!field) return;
 
-    // YoY 字段映射：指标字段 → 对应的同比增长字段
-    const yoyMap = {
-      operating_revenue: 'revenue_yoy',
-      net_profit_attr_parent: 'net_profit_yoy',
-      operating_profit: 'operating_profit_yoy',
-    };
-
     api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
       .then((res) => {
         const items = (res.data || []).reverse();
+        // 先用后端返回的 YoY 字段，没有则从前一年值算同比
+        const yoyMap = {
+          operating_revenue: 'revenue_yoy',
+          net_profit_attr_parent: 'net_profit_yoy',
+          operating_profit: 'operating_profit_yoy',
+        };
         const yoyField = yoyMap[field] || null;
-        const data = items.map((r) => ({
-          year: r.fiscal_year,
-          value: r[field] != null ? Number(r[field]) : 0,
-          yoy: yoyField ? (r[yoyField] != null ? Number(r[yoyField]) : null) : null,
-          label: name,
-        }));
+        const data = items.map((r, i) => {
+          const val = r[field] != null ? Number(r[field]) : 0;
+          let yoy = null;
+          if (yoyField && r[yoyField] != null) {
+            yoy = Number(r[yoyField]);
+          } else if (i > 0 && items[i - 1][field] != null && items[i - 1][field] !== 0) {
+            const prev = Number(items[i - 1][field]);
+            yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
+          }
+          return { year: r.fiscal_year, value: val, yoy, label: name };
+        });
         this.setData({ chartMetricName: name, chartMetricData: data });
       })
       .catch(() => {});
