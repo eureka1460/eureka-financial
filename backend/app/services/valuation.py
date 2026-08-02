@@ -235,19 +235,28 @@ class ValuationEngine:
         return float(debt) - float(cash)
 
     def _auto_fill_total_shares(self, symbol: str) -> Optional[float]:
-        """自动填充总股本。"""
+        """自动填充总股本。先查 stocks 表，再通过 EPS 反推。"""
         stock = self._get_stock(symbol)
         if stock.total_shares:
             return float(stock.total_shares)
+        # 从财报反推：总股本 = 归母净利润 / EPS
+        stmt = self._get_latest_stmt(symbol)
+        if stmt and stmt.basic_eps and stmt.net_profit_attr_parent:
+            eps = float(stmt.basic_eps)
+            profit = float(stmt.net_profit_attr_parent)
+            if eps > 0:
+                return profit / eps
         return None
 
     def _auto_fill_dividend(self, symbol: str) -> Optional[float]:
-        """自动填充每股股利。
-
-        financial_indicators 中的 dividend_per_share 如果是年报已为全年值。
-        当前未计算该字段（akshare 季度接口中无直接对应列）。
-        """
+        """自动填充每股股利。先查指标表，再通过 EPS × 30% 估算。"""
         ind = self._get_latest_indicator(symbol)
         if ind and ind.dividend_per_share is not None:
             return float(ind.dividend_per_share)
+        # 用 EPS × 30% 估算（A股平均分红率）
+        stmt = self._get_latest_stmt(symbol)
+        if stmt and stmt.basic_eps:
+            eps = float(stmt.basic_eps)
+            if eps > 0:
+                return eps * 0.3
         return None
