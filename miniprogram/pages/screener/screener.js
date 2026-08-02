@@ -17,9 +17,27 @@ Page({
     builderYears: 1,
     inputFocus: false,
 
-    // 指标列表
-    indicators: [],
-    indicatorNames: [],
+    // 指标列表（有默认值，页面加载即能用）
+    indicators: [
+      { field: 'roe', chinese_name: '净资产收益率(ROE)', unit: '%', category: '盈利能力' },
+      { field: 'roa', chinese_name: '总资产收益率(ROA)', unit: '%', category: '盈利能力' },
+      { field: 'gross_margin', chinese_name: '毛利率', unit: '%', category: '盈利能力' },
+      { field: 'net_margin', chinese_name: '净利率', unit: '%', category: '盈利能力' },
+      { field: 'operating_margin', chinese_name: '营业利润率', unit: '%', category: '盈利能力' },
+      { field: 'revenue_yoy', chinese_name: '营收同比增长率', unit: '%', category: '成长能力' },
+      { field: 'net_profit_yoy', chinese_name: '利润同比增长率', unit: '%', category: '成长能力' },
+      { field: 'debt_to_assets', chinese_name: '资产负债率', unit: '%', category: '偿债能力' },
+      { field: 'current_ratio', chinese_name: '流动比率', unit: '倍', category: '偿债能力' },
+      { field: 'quick_ratio', chinese_name: '速动比率', unit: '倍', category: '偿债能力' },
+      { field: 'fcf', chinese_name: '自由现金流(FCF)', unit: '元', category: '估值相关' },
+      { field: 'operating_revenue', chinese_name: '营业总收入', unit: '元', category: '利润表' },
+      { field: 'net_profit_attr_parent', chinese_name: '归母净利润', unit: '元', category: '利润表' },
+    ],
+    indicatorNames: [
+      '净资产收益率(ROE) (%)', '总资产收益率(ROA) (%)', '毛利率 (%)', '净利率 (%)', '营业利润率 (%)',
+      '营收同比增长率 (%)', '利润同比增长率 (%)', '资产负债率 (%)', '流动比率 (倍)', '速动比率 (倍)',
+      '自由现金流(FCF) (元)', '营业总收入 (元)', '归母净利润 (元)',
+    ],
 
     // 结果
     results: [],

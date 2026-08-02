@@ -25,6 +25,7 @@ Page({
     chartRevenue: [],
     chartProfit: [],
     chartROE: [],
+    showCharts: false,
 
     // 指标展示
     roe: '--',
@@ -152,6 +153,10 @@ Page({
         });
       })
       .catch(() => {});
+  },
+
+  onToggleCharts() {
+    this.setData({ showCharts: !this.data.showCharts });
   },
 
   onRetry() {
