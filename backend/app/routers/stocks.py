@@ -115,12 +115,18 @@ def get_stock_detail(
             total_equity=_f(latest_stmt.total_equity),
             basic_eps=_f(latest_stmt.basic_eps),
             roe=_f(latest_indicator.roe) if latest_indicator else None,
+            roa=_f(latest_indicator.roa) if latest_indicator else None,
             gross_margin=_f(latest_indicator.gross_margin) if latest_indicator else None,
             net_margin=_f(latest_indicator.net_margin) if latest_indicator else None,
+            operating_margin=_f(latest_indicator.operating_margin) if latest_indicator else None,
             revenue_yoy=_f(latest_indicator.revenue_yoy) if latest_indicator else None,
             net_profit_yoy=_f(latest_indicator.net_profit_yoy) if latest_indicator else None,
+            current_ratio=_f(latest_indicator.current_ratio) if latest_indicator else None,
+            quick_ratio=_f(latest_indicator.quick_ratio) if latest_indicator else None,
             debt_to_assets=_f(latest_indicator.debt_to_assets) if latest_indicator else None,
+            interest_coverage=_f(latest_indicator.interest_coverage) if latest_indicator else None,
             fcf=_f(latest_indicator.fcf) if latest_indicator else None,
+            book_value_per_share=_f(latest_indicator.book_value_per_share) if latest_indicator else None,
         )
 
     detail = StockDetail(

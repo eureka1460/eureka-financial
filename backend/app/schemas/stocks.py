@@ -34,12 +34,18 @@ class LatestFinancialSummary(BaseModel):
     total_equity: Optional[float] = None
     basic_eps: Optional[float] = None
     roe: Optional[float] = None
+    roa: Optional[float] = None
     gross_margin: Optional[float] = None
     net_margin: Optional[float] = None
+    operating_margin: Optional[float] = None
     revenue_yoy: Optional[float] = None
     net_profit_yoy: Optional[float] = None
+    current_ratio: Optional[float] = None
+    quick_ratio: Optional[float] = None
     debt_to_assets: Optional[float] = None
+    interest_coverage: Optional[float] = None
     fcf: Optional[float] = None
+    book_value_per_share: Optional[float] = None
 
     model_config = {"from_attributes": True}
 
