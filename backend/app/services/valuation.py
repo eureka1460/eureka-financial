@@ -148,11 +148,15 @@ class ValuationEngine:
         params_sources = {}
 
         d0 = request.d0
+        dividend_source = "user_provided"
         if d0 is None:
-            d0 = self._auto_fill_dividend(request.symbol)
-            params_sources["d0"] = "auto_filled" if d0 is not None else "unavailable"
-        else:
-            params_sources["d0"] = "user_provided"
+            d0, dividend_source = self._auto_fill_dividend(request.symbol)
+            if dividend_source == "actual":
+                params_sources["d0"] = "财报数据"
+            elif dividend_source == "estimated":
+                params_sources["d0"] = "估算（EPS × 30%）"
+            else:
+                params_sources["d0"] = "unavailable"
 
         n = request.forecast_years
         g1 = request.growth_rate_stage1
@@ -309,15 +313,17 @@ class ValuationEngine:
         detail.wacc = round(max(wacc, 0.03), 4)
         return detail.wacc, detail
 
-    def _auto_fill_dividend(self, symbol: str) -> Optional[float]:
-        """自动填充每股股利。先查指标表，再通过 EPS × 30% 估算。"""
+    def _auto_fill_dividend(self, symbol: str):
+        """自动填充每股股利。返回 (value, source)。
+        source: 'actual'=真实财报数据, 'estimated'=EPS估算, None=失败
+        """
         ind = self._get_latest_indicator(symbol)
         if ind and ind.dividend_per_share is not None:
-            return float(ind.dividend_per_share)
-        # 用 EPS × 30% 估算（A股平均分红率）
+            return float(ind.dividend_per_share), "actual"
+        # 用 EPS × 30% 估算
         stmt = self._get_latest_stmt(symbol)
         if stmt and stmt.basic_eps:
             eps = float(stmt.basic_eps)
             if eps > 0:
-                return eps * 0.3
-        return None
+                return round(eps * 0.3, 4), "estimated"
+        return None, None
