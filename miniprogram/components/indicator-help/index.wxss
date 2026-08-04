@@ -3,29 +3,31 @@
   position: relative;
 }
 .help-icon {
-  width: 28rpx; height: 28rpx;
+  width: 32rpx; height: 32rpx;
   border-radius: 50%;
   border: 1.5rpx solid var(--color-border);
   color: var(--color-text-muted);
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 4rpx;
+  margin-left: 6rpx;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 .help-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 999;
+  z-index: 9999;
 }
 .help-popup {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1000;
+  z-index: 10000;
   background: #1F2937;
   color: #F9FAFB;
   padding: var(--spacing-lg);

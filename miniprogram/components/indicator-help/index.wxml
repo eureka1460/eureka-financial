@@ -1,5 +1,5 @@
 <view class="help-wrap">
-  <view class="help-icon" bindtap="onTap">?</view>
+  <view class="help-icon" catchtap="onTap">?</view>
   <view wx:if="{{show}}" class="help-popup" catchtap="onClose">
     <text class="help-text">{{text}}</text>
   </view>
