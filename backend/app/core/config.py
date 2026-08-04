@@ -27,24 +27,28 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if not self.DATABASE_URL:
+            if self.MYSQL_HOST:
+                from urllib.parse import quote_plus
+                pw = quote_plus(self.MYSQL_PASSWORD)
+                self.DATABASE_URL = (
+                    f"mysql+pymysql://{self.MYSQL_USER}:{pw}"
+                    f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
+                )
+            else:
+                self.DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
+
     # ── 数据库 ────────────────────────────────────────────
-    # 开发阶段默认 SQLite，云托管部署时设置 MYSQL_HOST 即可切 MySQL
+    # 开发阶段默认 SQLite，云托管部署时设 MYSQL_HOST 切 MySQL
     MYSQL_HOST: str = ""
-    MYSQL_PORT: int = 3306
+    MYSQL_PORT: str = "3306"
     MYSQL_USER: str = "root"
     MYSQL_PASSWORD: str = ""
     MYSQL_DATABASE: str = "eureka"
-
-    @property
-    def DATABASE_URL(self) -> str:
-        if self.MYSQL_HOST:
-            from urllib.parse import quote_plus
-            pw = quote_plus(self.MYSQL_PASSWORD)
-            return (
-                f"mysql+pymysql://{self.MYSQL_USER}:{pw}"
-                f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
-            )
-        return f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
+    # 完整数据库 URL（自动拼接，也可直接设置）
+    DATABASE_URL: str = ""
 
     # ── 缓存 ──────────────────────────────────────────────
     CACHE_DIR: str = str(PROJECT_ROOT / "data" / "cache")
