@@ -91,6 +91,10 @@ class ValuationEngine:
             params_sources["wacc"] = "user_provided"
 
         # 2. 参数校验
+        n = request.forecast_years
+        g1 = request.growth_rate_stage1
+        g2 = request.growth_rate_terminal
+
         if fcf_base is None:
             raise ValuationParameterError("无法获取基期自由现金流，请手动提供 fcf_base")
         if total_shares is None or total_shares <= 0:
