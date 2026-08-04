@@ -28,9 +28,23 @@ class Settings(BaseSettings):
     )
 
     # ── 数据库 ────────────────────────────────────────────
-    # 开发阶段默认 SQLite，云托管部署时通过环境变量切换 MySQL
-    # MySQL 格式: mysql+pymysql://user:pass@host:port/dbname
-    DATABASE_URL: str = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
+    # 开发阶段默认 SQLite，云托管部署时设置 MYSQL_HOST 即可切 MySQL
+    MYSQL_HOST: str = ""
+    MYSQL_PORT: int = 3306
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = ""
+    MYSQL_DATABASE: str = "eureka"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        if self.MYSQL_HOST:
+            from urllib.parse import quote_plus
+            pw = quote_plus(self.MYSQL_PASSWORD)
+            return (
+                f"mysql+pymysql://{self.MYSQL_USER}:{pw}"
+                f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
+            )
+        return f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
 
     # ── 缓存 ──────────────────────────────────────────────
     CACHE_DIR: str = str(PROJECT_ROOT / "data" / "cache")
