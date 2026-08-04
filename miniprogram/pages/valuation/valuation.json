@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "indicator-help": "/components/indicator-help/index"
+  },
   "navigationBarTitleText": "估值计算"
 }

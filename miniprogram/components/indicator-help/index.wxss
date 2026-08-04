@@ -1,0 +1,40 @@
+.help-wrap {
+  display: inline-flex;
+  position: relative;
+}
+.help-icon {
+  width: 28rpx; height: 28rpx;
+  border-radius: 50%;
+  border: 1.5rpx solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 18rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4rpx;
+  flex-shrink: 0;
+}
+.help-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 999;
+}
+.help-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: #1F2937;
+  color: #F9FAFB;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  max-width: 560rpx;
+  width: 80%;
+  box-shadow: var(--shadow-lg);
+}
+.help-text {
+  font-size: var(--font-sm);
+  line-height: 1.7;
+}

@@ -31,7 +31,7 @@
       <text class="text-sm font-bold" style="margin-bottom: 20rpx; display: block;">模型参数（留空则自动填充）</text>
 
       <view class="param-row">
-        <text class="param-label text-sm text-secondary">基期 FCF</text>
+        <view class="flex items-center gap-xs"><text class="param-label text-sm text-secondary">基期 FCF</text><indicator-help label="自由现金流(FCF)" /></view>
         <input class="param-input text-sm" type="digit" placeholder="自动" value="{{dcfParams.fcf_base}}"
                data-field="fcf_base" bindinput="onDcfInput" />
       </view>

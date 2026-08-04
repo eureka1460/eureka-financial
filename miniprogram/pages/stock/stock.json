@@ -1,7 +1,8 @@
 {
   "usingComponents": {
     "metric-bar": "/components/metric-bar/index",
-    "history-chart": "/components/history-chart/index"
+    "history-chart": "/components/history-chart/index",
+    "indicator-help": "/components/indicator-help/index"
   },
   "navigationBarTitleText": "股票详情"
 }
