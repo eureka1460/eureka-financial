@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     )
 
     # ── 数据库 ────────────────────────────────────────────
-    # SQLite 开发阶段：sqlite:///./data/eureka.db
-    # PostgreSQL 生产环境：postgresql://user:pass@host/dbname
+    # 开发阶段默认 SQLite，云托管部署时通过环境变量切换 MySQL
+    # MySQL 格式: mysql+pymysql://user:pass@host:port/dbname
     DATABASE_URL: str = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
 
     # ── 缓存 ──────────────────────────────────────────────

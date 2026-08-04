@@ -1,7 +1,7 @@
 """
 数据库连接管理。
 
-为 SQLite 启用 WAL 模式以支持并发读写（ETL 写 + API 读）。
+支持 SQLite（开发）和 MySQL（生产，云开发托管数据库）。
 通过 SQLAlchemy 2.x 风格创建引擎和会话工厂。
 """
 
@@ -11,22 +11,32 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
 # ── Engine ─────────────────────────────────────────────────
-# SQLite 专用参数：
-#   - check_same_thread=False  允许跨线程使用（FastAPI 的 async 线程池需要）
-#   - WAL 模式                  写操作不阻塞读操作
+is_sqlite = "sqlite" in settings.DATABASE_URL
+
 connect_args = {}
-if "sqlite" in settings.DATABASE_URL:
+engine_kwargs = {
+    "echo": False,
+    "pool_pre_ping": True,
+}
+
+if is_sqlite:
     connect_args = {"check_same_thread": False}
+else:
+    # MySQL 连接池配置
+    engine_kwargs.update({
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_recycle": 3600,
+    })
 
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=False,                # 生产环境设为 False，调试时可临时开启
     connect_args=connect_args,
-    pool_pre_ping=True,        # 连接前检测是否存活
+    **engine_kwargs,
 )
 
-# SQLite WAL 模式：提升并发性能
-if "sqlite" in settings.DATABASE_URL:
+# SQLite WAL 模式
+if is_sqlite:
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
@@ -43,18 +53,11 @@ SessionLocal = sessionmaker(
 )
 
 # ── Base ───────────────────────────────────────────────────
-# 所有 ORM 模型继承此类
 Base = declarative_base()
 
 
 def get_db():
-    """FastAPI 依赖注入：每个请求获取独立的数据库会话。
-
-    用法：
-        @app.get("/stocks")
-        def list_stocks(db: Session = Depends(get_db)):
-            ...
-    """
+    """FastAPI 依赖注入：每个请求获取独立的数据库会话。"""
     db = SessionLocal()
     try:
         yield db
