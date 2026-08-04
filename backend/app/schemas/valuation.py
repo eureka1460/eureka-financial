@@ -49,11 +49,25 @@ class DCFResult(BaseModel):
     pv_terminal: float = Field(..., description="终值现值")
 
 
+class WaccDetail(BaseModel):
+    """WACC 计算明细。"""
+    equity_weight: float = 0
+    debt_weight: float = 0
+    risk_free_rate: float = 0.025
+    beta: float = 1.0
+    market_premium: float = 0.055
+    cost_of_equity: float = 0
+    cost_of_debt: float = 0
+    tax_rate: float = 0.25
+    wacc: float = 0
+
+
 class DCFResponse(BaseModel):
     """DCF 估值完整响应（含输入参数 + 计算结果）。"""
 
     input_params: dict = Field(..., description="使用的参数及其来源")
     result: DCFResult
+    wacc_detail: Optional[WaccDetail] = None
 
 
 # ═══════════════════════════════════════════════════════════════

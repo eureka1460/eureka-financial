@@ -79,8 +79,9 @@ class ValuationEngine:
             params_sources["total_shares"] = "user_provided"
 
         wacc = request.wacc
+        wacc_detail = None
         if wacc == 0.08:  # 默认值，尝试自动计算
-            auto_wacc = self._auto_fill_wacc(request.symbol)
+            auto_wacc, wacc_detail = self._auto_fill_wacc(request.symbol)
             if auto_wacc:
                 wacc = auto_wacc
                 params_sources["wacc"] = "auto_filled"
@@ -136,6 +137,7 @@ class ValuationEngine:
                 pv_stage1=round(pv_stage1, 2),
                 pv_terminal=round(pv_terminal, 2),
             ),
+            wacc_detail=wacc_detail,
         )
 
     # ═══════════════════════════════════════════════════════════
@@ -266,34 +268,46 @@ class ValuationEngine:
                 return profit / eps
         return None
 
-    def _auto_fill_wacc(self, symbol: str) -> Optional[float]:
-        """自动计算 WACC = 股权成本 × 权益权重 + 税后债务成本 × 负债权重。"""
+    def _auto_fill_wacc(self, symbol: str):
+        """自动计算 WACC，返回 (wacc值, WaccDetail)。"""
+        from app.schemas.valuation import WaccDetail
+
+        detail = WaccDetail()
         stmt = self._get_latest_stmt(symbol)
         if not stmt or not stmt.total_assets or not stmt.total_equity:
-            return None
+            return None, None
 
         # 权益/负债权重
         equity_weight = float(stmt.total_equity) / float(stmt.total_assets)
         debt_weight = 1 - equity_weight
+        detail.equity_weight = round(equity_weight, 4)
+        detail.debt_weight = round(debt_weight, 4)
 
         # 股权成本 = Rf + β × 市场溢价
         stock = self._get_stock(symbol)
         industry = stock.industry if stock and stock.industry else ""
         beta = self.BETA_BY_INDUSTRY.get(industry, 1.0)
         cost_of_equity = self.RISK_FREE_RATE + beta * self.MARKET_PREMIUM
+        detail.risk_free_rate = self.RISK_FREE_RATE
+        detail.beta = beta
+        detail.market_premium = self.MARKET_PREMIUM
+        detail.cost_of_equity = round(cost_of_equity, 4)
 
         # 税后债务成本 = (利息费用 / 有息负债) × (1 - 税率)
         borrowings = (float(stmt.short_term_borrowings or 0) +
                        float(stmt.long_term_borrowings or 0))
         ie = float(stmt.interest_expense or 0)
         cost_of_debt = (ie / borrowings) if borrowings > 0 and ie > 0 else 0.04
+        detail.cost_of_debt = round(cost_of_debt, 4)
         # 税率 = 所得税 / 利润总额
         tax_rate = 0.25
         if stmt.total_profit and stmt.total_profit > 0 and stmt.income_tax_expense:
             tax_rate = min(float(stmt.income_tax_expense) / float(stmt.total_profit), 0.35)
+        detail.tax_rate = round(tax_rate, 4)
 
         wacc = equity_weight * cost_of_equity + debt_weight * cost_of_debt * (1 - tax_rate)
-        return round(max(wacc, 0.03), 4)  # 最低 3%
+        detail.wacc = round(max(wacc, 0.03), 4)
+        return detail.wacc, detail
 
     def _auto_fill_dividend(self, symbol: str) -> Optional[float]:
         """自动填充每股股利。先查指标表，再通过 EPS × 30% 估算。"""
