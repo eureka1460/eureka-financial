@@ -75,6 +75,28 @@
 }
 
 /* ── 免责声明 ─────────────────────── */
+/* WACC 明细 */
+.wacc-detail {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+.wacc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rpx 0;
+}
+.wacc-input {
+  width: 160rpx;
+  text-align: right;
+  border: 1rpx solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4rpx 8rpx;
+  font-size: var(--font-xs);
+}
+
 .disclaimer {
   padding: var(--spacing-lg);
   text-align: center;

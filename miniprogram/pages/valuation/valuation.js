@@ -46,6 +46,10 @@ Page({
       required_return: 0.07,
     },
 
+    // WACC 明细
+    showWaccDetail: false,
+    waccDetail: {},
+
     // 格式化后的 DCF 结果
     dcfFairValue: '--',
     dcfEnterpriseValue: '--',
@@ -110,6 +114,24 @@ Page({
     this.setData(update);
   },
 
+  onToggleWacc() {
+    this.setData({ showWaccDetail: !this.data.showWaccDetail });
+  },
+
+  onWaccInput(e) {
+    const field = e.currentTarget.dataset.field;
+    const val = parseFloat(e.detail.value) || 0;
+    const detail = { ...this.data.waccDetail, [field]: val };
+    // 重新计算 WACC = 权益占比 × (Rf + β × 溢价) + 负债权重 × 债务成本 × (1 - 税率)
+    const ew = detail.equity_weight || 0;
+    const dw = 1 - ew;
+    const coe = (detail.risk_free_rate || 0) + (detail.beta || 1) * (detail.market_premium || 0.055);
+    const cod = detail.cost_of_debt || 0;
+    const tax = detail.tax_rate || 0.25;
+    detail.wacc = +(ew * coe + dw * cod * (1 - tax)).toFixed(4);
+    this.setData({ waccDetail: detail, 'dcfParams.wacc': detail.wacc });
+  },
+
   onCalcDCF() {
     const p = this.data.dcfParams;
     if (!p.symbol) {
@@ -142,6 +164,7 @@ Page({
           dcfInputParams: JSON.stringify(res.data.input_params, null, 2),
           dcfDone: true,
           loading: false,
+          waccDetail: res.data.wacc_detail || {},
         });
       })
       .catch((err) => {

@@ -50,10 +50,43 @@
         <input class="param-input text-sm" type="digit" placeholder="0.03" value="{{dcfParams.growth_rate_terminal}}"
                data-field="growth_rate_terminal" bindinput="onDcfInput" />
       </view>
-      <view class="param-row">
-        <text class="param-label text-sm text-secondary">WACC</text>
-        <input class="param-input text-sm" type="digit" placeholder="0.08" value="{{dcfParams.wacc}}"
-               data-field="wacc" bindinput="onDcfInput" />
+      <!-- WACC（可展开查看/编辑明细） -->
+      <view class="param-row" style="flex-direction: column; align-items: stretch;">
+        <view style="display: flex; justify-content: space-between; align-items: center;" bindtap="onToggleWacc">
+          <text class="text-sm text-secondary">WACC</text>
+          <text class="text-sm text-accent">{{showWaccDetail ? '▾' : '▸'}} {{waccDetail.wacc || dcfParams.wacc || '0.08'}}</text>
+        </view>
+        <view wx:if="{{showWaccDetail}}" class="wacc-detail">
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">无风险利率</text>
+            <input class="wacc-input" type="digit" value="{{waccDetail.risk_free_rate}}" data-field="risk_free_rate" bindinput="onWaccInput" />
+          </view>
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">β（贝塔）</text>
+            <input class="wacc-input" type="digit" value="{{waccDetail.beta}}" data-field="beta" bindinput="onWaccInput" />
+          </view>
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">市场风险溢价</text>
+            <input class="wacc-input" type="digit" value="{{waccDetail.market_premium}}" data-field="market_premium" bindinput="onWaccInput" />
+          </view>
+          <view class="divider" style="margin: 8rpx 0;"></view>
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">权益占比</text>
+            <text class="text-xs">{{waccDetail.equity_weight}}</text>
+          </view>
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">债务成本</text>
+            <input class="wacc-input" type="digit" value="{{waccDetail.cost_of_debt}}" data-field="cost_of_debt" bindinput="onWaccInput" />
+          </view>
+          <view class="wacc-row">
+            <text class="text-xs text-secondary">税率</text>
+            <input class="wacc-input" type="digit" value="{{waccDetail.tax_rate}}" data-field="tax_rate" bindinput="onWaccInput" />
+          </view>
+          <view class="wacc-row font-bold" style="margin-top: 8rpx;">
+            <text class="text-sm">WACC =</text>
+            <text class="text-sm text-accent">{{waccDetail.wacc || dcfParams.wacc}}</text>
+          </view>
+        </view>
       </view>
       <view class="param-row">
         <text class="param-label text-sm text-secondary">净负债</text>
