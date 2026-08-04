@@ -1,11 +1,5 @@
 /**
- * history-chart 组件 — 历年财务数据柱状图
- *
- * Props:
- *   data: [{ year, value, yoy, label }] 按年份排序
- *   title: 图表标题
- *   unit: 单位（元 / %）
- *   color: 柱状颜色
+ * history-chart 组件 — 历年财务数据柱状图（支持正负值）
  */
 Component({
   properties: {
@@ -18,21 +12,27 @@ Component({
   data: {
     bars: [],
     maxVal: 1,
+    hasNegative: false,
   },
 
   observers: {
     data(list) {
       if (!list || list.length === 0) return;
-      const vals = list.map((d) => Math.abs(d.value || 0));
-      const max = Math.max(...vals, 1);
-      const bars = list.map((d) => ({
-        ...d,
-        height: Math.round(((d.value || 0) / max) * 100),
-        displayVal: this.fmtVal(d.value),
-        yoyText: d.yoy != null ? (d.yoy >= 0 ? '+' + (d.yoy * 100).toFixed(1) + '%' : (d.yoy * 100).toFixed(1) + '%') : '',
-        yoyDown: d.yoy != null && d.yoy < 0,
-      }));
-      this.setData({ bars, maxVal: max });
+      const absVals = list.map((d) => Math.abs(d.value || 0));
+      const max = Math.max(...absVals, 1);
+      const hasNeg = list.some((d) => (d.value || 0) < 0);
+      const bars = list.map((d) => {
+        const v = d.value || 0;
+        return {
+          ...d,
+          height: Math.round((Math.abs(v) / max) * 100),
+          isNeg: v < 0,
+          displayVal: this.fmtVal(v),
+          yoyText: d.yoy != null ? (d.yoy >= 0 ? '+' + (d.yoy * 100).toFixed(1) + '%' : (d.yoy * 100).toFixed(1) + '%') : '',
+          yoyDown: d.yoy != null && d.yoy < 0,
+        };
+      });
+      this.setData({ bars, maxVal: max, hasNegative: hasNeg });
     },
   },
 
