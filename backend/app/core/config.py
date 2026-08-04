@@ -27,10 +27,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def model_post_init(self, __context):
         if not self.DATABASE_URL:
-            # TODO: 改为环境变量方式
             self.DATABASE_URL = "mysql+pymysql://root1:14601554%25qin@sh-cynosdbmysql-grp-miggvbtm.sql.tencentcdb.com:26657/cloud1-d2gaskev55a202518"
 
     # ── 数据库 ────────────────────────────────────────────
