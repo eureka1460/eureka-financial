@@ -312,6 +312,41 @@ class DataFetcher:
 
         return results
 
+    # ── 行业分类 ────────────────────────────────────────────
+    def fetch_industry_map(self) -> pd.DataFrame:
+        """获取全 A 股申万行业分类。
+
+        Returns:
+            DataFrame with columns: symbol, industry
+        """
+        cache_key = _make_cache_key("industry_map")
+        if cache_key in _cache:
+            return _cache[cache_key]
+
+        try:
+            df = ak.stock_board_industry_name_em()
+            if len(df) > 0:
+                # 列名通常是 "代码" 和 "板块名称"，标准化
+                rename_map = {}
+                for col in df.columns:
+                    if col in ("代码", "code"):
+                        rename_map[col] = "symbol"
+                    elif col in ("板块名称", "industry", "name"):
+                        rename_map[col] = "industry"
+                if rename_map:
+                    df = df.rename(columns=rename_map)
+                # 确保有 symbol 和 industry 两列
+                if "symbol" not in df.columns or "industry" not in df.columns:
+                    df = df.iloc[:, :2]
+                    df.columns = ["symbol", "industry"]
+                df["symbol"] = df["symbol"].astype(str).str.strip()
+                _cache.set(cache_key, df, expire=settings.CACHE_TTL_HISTORICAL)
+                return df
+        except Exception as e:
+            logger.warning(f"获取行业分类失败: {e}")
+
+        return pd.DataFrame(columns=["symbol", "industry"])
+
 
 # ═══════════════════════════════════════════════════════════════
 # L4: 备用源 fallback 逻辑

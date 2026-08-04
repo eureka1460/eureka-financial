@@ -97,6 +97,23 @@ class DataLoader:
             return "BJ"
         return "UNKNOWN"
 
+    # ── 行业分类更新 ────────────────────────────────────
+    def upsert_industries(self, df: pd.DataFrame) -> int:
+        """批量更新股票的行业分类。"""
+        count = 0
+        for _, row in df.iterrows():
+            symbol = str(row.get("symbol", "")).strip()
+            industry = str(row.get("industry", "")).strip()
+            if not symbol or not industry:
+                continue
+            stock = self.db.query(Stock).filter(Stock.symbol == symbol).first()
+            if stock and not stock.industry:
+                stock.industry = industry
+                count += 1
+        self.db.commit()
+        logger.info(f"行业分类更新: {count} 只")
+        return count
+
     # ── 财务报表 upsert ───────────────────────────────────
     def upsert_financials(self, df: pd.DataFrame) -> int:
         """批量 upsert 财务报表数据。

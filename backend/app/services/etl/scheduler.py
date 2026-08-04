@@ -91,6 +91,15 @@ class ETLOrchestrator:
             # 步骤 1.5: 先写入股票基本信息
             if not dry_run:
                 loader.upsert_stocks(stock_df)
+                # 获取并写入行业分类
+                try:
+                    logger.info("正在获取行业分类...")
+                    industry_df = self.fetcher.fetch_industry_map()
+                    if industry_df is not None and len(industry_df) > 0:
+                        loader.upsert_industries(industry_df)
+                        logger.info(f"行业分类更新完成: {len(industry_df)} 条")
+                except Exception as e:
+                    logger.warning(f"行业分类获取失败（不影响主流程）: {e}")
 
             # 步骤 2: 逐只股票处理
             for i, (_, row) in enumerate(stock_df.iterrows()):
