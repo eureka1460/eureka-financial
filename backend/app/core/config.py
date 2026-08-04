@@ -30,12 +30,15 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.DATABASE_URL:
-            if self.MYSQL_HOST:
+            import os
+            host = os.environ.get("MYSQL_HOST", "")
+            if host:
                 from urllib.parse import quote_plus
-                pw = quote_plus(self.MYSQL_PASSWORD)
+                pw = quote_plus(os.environ.get("MYSQL_PASSWORD", ""))
                 self.DATABASE_URL = (
-                    f"mysql+pymysql://{self.MYSQL_USER}:{pw}"
-                    f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
+                    f"mysql+pymysql://{os.environ.get('MYSQL_USER','root')}:{pw}"
+                    f"@{host}:{os.environ.get('MYSQL_PORT','3306')}"
+                    f"/{os.environ.get('MYSQL_DATABASE','eureka')}"
                 )
             else:
                 self.DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
