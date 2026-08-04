@@ -1,22 +1,22 @@
 <view class="chart-card" wx:if="{{bars.length > 0}}">
   <text class="chart-title text-sm font-bold">{{title}}</text>
 
-  <view class="chart-body {{hasNegative ? 'has-neg' : ''}}">
+  <view class="chart-body">
     <view class="bar-col" wx:for="{{bars}}" wx:key="year">
-      <!-- 同比标签 -->
+      <!-- 同比 -->
       <text wx:if="{{item.yoyText}}" class="yoy-tag {{item.yoyDown ? 'yoy-down' : 'yoy-up'}}">{{item.yoyText}}</text>
       <text wx:else class="yoy-tag yoy-none">--</text>
 
-      <!-- 正数柱子上方的数值 -->
+      <!-- 正数：数值在上，柱子向下到基线 -->
       <text wx:if="{{!item.isNeg}}" class="bar-val-top">{{item.displayVal}}</text>
-
-      <!-- 柱子区域 -->
-      <view class="bar-wrap">
-        <view wx:if="{{!item.isNeg}}" class="bar bar-pos" style="height: {{item.height}}%; background: {{color}};"></view>
-        <view wx:if="{{item.isNeg}}" class="bar bar-neg" style="height: {{item.height}}%; background: #EF4444;"></view>
+      <view wx:if="{{!item.isNeg}}" class="bar-pos-box">
+        <view class="bar bar-pos" style="height: {{item.height}}%; background: {{color}};"></view>
       </view>
 
-      <!-- 负数柱子下方的数值 -->
+      <!-- 负数：柱子从基线下到下，数值在底部 -->
+      <view wx:if="{{item.isNeg}}" class="bar-neg-box">
+        <view class="bar bar-neg" style="height: {{item.height}}%; background: #EF4444;"></view>
+      </view>
       <text wx:if="{{item.isNeg}}" class="bar-val-neg text-down">{{item.displayVal}}</text>
 
       <!-- 年份 -->
