@@ -22,11 +22,11 @@ engine_kwargs = {
 if is_sqlite:
     connect_args = {"check_same_thread": False}
 else:
-    # MySQL 连接池配置
+    # MySQL 配置
+    connect_args = {"charset": "utf8mb4"}
     engine_kwargs.update({
-        "pool_size": 10,
-        "max_overflow": 20,
-        "pool_recycle": 3600,
+        "pool_size": 3,
+        "pool_recycle": 600,
     })
 
 engine = create_engine(
