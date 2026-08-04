@@ -30,18 +30,8 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.DATABASE_URL:
-            import os
-            host = os.environ.get("MYSQL_HOST", "")
-            if host:
-                from urllib.parse import quote_plus
-                pw = quote_plus(os.environ.get("MYSQL_PASSWORD", ""))
-                self.DATABASE_URL = (
-                    f"mysql+pymysql://{os.environ.get('MYSQL_USER','root')}:{pw}"
-                    f"@{host}:{os.environ.get('MYSQL_PORT','3306')}"
-                    f"/{os.environ.get('MYSQL_DATABASE','eureka')}"
-                )
-            else:
-                self.DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
+            # TODO: 改为环境变量方式
+            self.DATABASE_URL = "mysql+pymysql://root1:14601554%25qin@sh-cynosdbmysql-grp-miggvbtm.sql.tencentcdb.com:26657/cloud1-d2gaskev55a202518"
 
     # ── 数据库 ────────────────────────────────────────────
     # 开发阶段默认 SQLite，云托管部署时设 MYSQL_HOST 切 MySQL
