@@ -69,6 +69,24 @@ def on_startup():
 
 
 # ── 健康检查 ───────────────────────────────────────────────
+@app.get("/api/v1/test-akshare")
+def test_akshare():
+    """测试 aksale 是否能正常抓取数据。"""
+    try:
+        import akshare as ak
+        df = ak.stock_profit_sheet_by_quarterly_em(symbol="SH600519")
+        return JSONResponse({
+            "code": 200,
+            "message": f"ok, {len(df)} rows",
+            "data": {"columns": list(df.columns)[:10], "rows": len(df)},
+        })
+    except Exception as e:
+        return JSONResponse({
+            "code": 500,
+            "message": f"aksale 测试失败: {type(e).__name__}: {e}",
+        })
+
+
 @app.get("/")
 @app.get("/api/v1/health")
 def health_check():
