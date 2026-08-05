@@ -78,7 +78,7 @@ def test_akshare():
         return JSONResponse({
             "code": 200,
             "message": f"ok, {len(df)} rows",
-            "data": {"columns": list(df.columns)[:10], "rows": len(df)},
+            "data": {"columns": list(df.columns), "rows": len(df)},
         })
     except Exception as e:
         return JSONResponse({
