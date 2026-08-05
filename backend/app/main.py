@@ -72,7 +72,15 @@ def on_startup():
 @app.get("/")
 @app.get("/api/v1/health")
 def health_check():
-    """健康检查端点，用于监控和负载均衡探测。"""
+    """健康检查端点。"""
+    # 测试外网连通性
+    import urllib.request
+    net_ok = False
+    try:
+        urllib.request.urlopen("https://www.baidu.com", timeout=5)
+        net_ok = True
+    except Exception:
+        pass
     return JSONResponse(
         content={
             "code": 200,
@@ -80,6 +88,7 @@ def health_check():
             "data": {
                 "version": "0.1.0",
                 "database": settings.DATABASE_URL.split("///")[-1],
+                "network": "ok" if net_ok else "blocked",
             },
         }
     )
