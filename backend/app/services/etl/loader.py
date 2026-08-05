@@ -10,6 +10,7 @@ from typing import Optional
 
 import pandas as pd
 from sqlalchemy import select, and_
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from app.core.database import SessionLocal
@@ -47,6 +48,21 @@ class DataLoader:
         if self._owns_db and self._db:
             self._db.close()
             self._db = None
+
+    def _upsert(self, model, values: dict, unique_cols: list):
+        """通用 upsert，兼容 SQLite 和 MySQL。"""
+        is_mysql = "mysql" in str(self.db.bind.url)
+        if is_mysql:
+            stmt = mysql_insert(model).values(**values)
+            update_cols = {k: stmt.inserted[k] for k in values if k not in ("id", "created_at")}
+            stmt = stmt.on_duplicate_key_update(**update_cols)
+        else:
+            stmt = sqlite_insert(model).values(**values)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=unique_cols,
+                set_={k: stmt.excluded[k] for k in values if k not in ("id", "created_at")},
+            )
+        self.db.execute(stmt)
 
     # ── 股票元数据 upsert ─────────────────────────────────
     def upsert_stocks(self, df: pd.DataFrame) -> int:
@@ -144,17 +160,10 @@ class DataLoader:
                     skipped += 1
                     continue
 
-                # 使用 SQLAlchemy 2.x insert().on_conflict_do_update()
-                stmt = sqlite_insert(FinancialStatement).values(**record)
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["symbol", "report_date", "report_type"],
-                    set_={
-                        k: stmt.excluded[k]
-                        for k in record
-                        if k not in ("id", "created_at")
-                    },
+                self._upsert(
+                    FinancialStatement, record,
+                    unique_cols=["symbol", "report_date", "report_type"],
                 )
-                self.db.execute(stmt)
                 count += 1
 
             except Exception as e:
@@ -389,12 +398,10 @@ class DataLoader:
 
     def _upsert_indicator(self, ind: dict):
         """插入或更新一条计算指标记录。"""
-        stmt = sqlite_insert(FinancialIndicator).values(**ind)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["symbol", "report_date", "report_type"],
-            set_={k: stmt.excluded[k] for k in ind if k != "id"},
+        self._upsert(
+            FinancialIndicator, ind,
+            unique_cols=["symbol", "report_date", "report_type"],
         )
-        self.db.execute(stmt)
 
     # ── 清空数据（用于重置） ──────────────────────────────
     def truncate_all(self):
