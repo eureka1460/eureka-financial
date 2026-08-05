@@ -2,7 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# 安装依赖
+# 系统库（aksale 依赖）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ libxml2-dev libxslt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 依赖
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
