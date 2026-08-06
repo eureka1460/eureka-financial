@@ -10,10 +10,7 @@
     <!-- 股票头部 -->
     <view class="header card">
       <view class="flex justify-between items-center">
-        <view>
-          <text class="text-2xl font-bold">{{stock.name}}</text>
-          <text class="text-sm text-secondary" style="margin-left:12rpx">{{stock.symbol}}</text>
-        </view>
+        <view><text class="text-2xl font-bold">{{stock.name}}</text><text class="text-sm text-secondary" style="margin-left:12rpx">{{stock.symbol}}</text></view>
         <text class="tag tag-neutral">{{marketLabel}}</text>
       </view>
       <view class="text-xs text-muted" style="margin-top:4rpx">{{stock.industry || '行业未知'}}</view>
@@ -22,46 +19,43 @@
     <!-- 多期数据对比表 -->
     <view class="card">
       <text class="text-md font-bold" style="margin-bottom:16rpx;display:block">财务数据对比</text>
-
-      <!-- 表头：时期标签 -->
       <scroll-view scroll-x class="table-scroll">
         <view class="table">
-          <!-- 表头行 -->
           <view class="table-row table-header">
             <view class="col-label">指标</view>
             <view class="col-val" wx:for="{{periods}}" wx:key="key">{{item.label}}</view>
           </view>
-
-          <!-- 数据行 -->
           <view class="table-row" wx:for="{{rows}}" wx:key="field" bindtap="onTapMetric" data-field="{{item.field}}" data-name="{{item.name}}">
-            <view class="col-label">
-              <text class="text-sm">{{item.name}}</text>
-              <text class="help-q" catchtap="onHelpTap" data-name="{{item.name}}">?</text>
-            </view>
-            <view class="col-val" wx:for="{{item.vals}}" wx:key="idx" wx:for-item="v">
-              <text class="text-sm font-medium {{v.cls || ''}}">{{v.text || '--'}}</text>
-            </view>
+            <view class="col-label"><text class="text-sm">{{item.name}}</text><text class="help-q" catchtap="onHelpTap" data-name="{{item.name}}">?</text></view>
+            <view class="col-val" wx:for="{{item.vals}}" wx:key="idx" wx:for-item="v"><text class="text-sm font-medium {{v.cls || ''}}">{{v.text || '--'}}</text></view>
           </view>
         </view>
       </scroll-view>
-
-      <view class="text-xs text-muted" style="text-align:center;margin-top:12rpx">
-        点击任意指标行查看历年趋势图表 ▼
-      </view>
+      <view class="text-xs text-muted" style="text-align:center;margin-top:12rpx">点击任意指标行查看历年趋势图表 ▼</view>
     </view>
 
-    <!-- 点击指标后弹出的图表 -->
+    <!-- 内联柱状图 + 折线 -->
     <view wx:if="{{chartMetricName}}" class="card">
-      <view class="flex justify-between items-center" style="margin-bottom:12rpx">
+      <view class="flex justify-between items-center" style="margin-bottom:8rpx">
         <text class="text-md font-bold">{{chartMetricName}}</text>
-        <text class="text-sm text-accent" bindtap="onHideMetricChart">关闭 ✕</text>
+        <view class="flex items-center gap-sm">
+          <view class="tag-pill {{chartPeriod === 'annual' ? 'pill-on' : ''}}" bindtap="onToggleChartPeriod">年报</view>
+          <view class="tag-pill {{chartPeriod === 'quarterly' ? 'pill-on' : ''}}" bindtap="onToggleChartPeriod">季报</view>
+          <text class="text-accent" style="margin-left:8rpx;font-size:28rpx" bindtap="onHideMetricChart">✕</text>
+        </view>
       </view>
-      <!-- 年报/季报切换 -->
-      <view class="flex gap-sm" style="margin-bottom:16rpx">
-        <view class="tag {{chartPeriod === 'annual' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">年报</view>
-        <view class="tag {{chartPeriod === 'quarterly' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">季报</view>
+      <view class="ch-scroll">
+        <view class="ch-body">
+          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year">
+            <text class="ch-yoy {{item._yUp || ''}}{{item._yDn || ''}}{{item._yNone || ''}}">{{item._yTxt || ''}}</text>
+            <view class="ch-bar-wrap">
+              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}%; background:{{item._neg ? '#EF4444' : '#3B82F6'}};"></view>
+            </view>
+            <text class="ch-val">{{item._val}}</text>
+            <text class="ch-yr">{{item._lbl}}</text>
+          </view>
+        </view>
       </view>
-      <history-chart title="" chartData="{{chartMetricData}}" color="#F59E0B" />
     </view>
 
     <!-- 帮助弹窗 -->
@@ -73,7 +67,7 @@
       </view>
     </view>
 
-    <!-- 历年趋势图表（折叠） -->
+    <!-- 核心指标图表（折叠） -->
     <view class="card">
       <view class="flex justify-between items-center" bindtap="onToggleCharts">
         <text class="text-md font-bold">核心指标图表</text>

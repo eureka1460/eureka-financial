@@ -67,6 +67,7 @@ Page({
     // 点击指标图表
     chartMetricName: '',
     chartMetricData: [],
+    chartBars: [],
     chartField: '',
     chartPeriod: 'annual',
     annualData: [],
@@ -196,41 +197,58 @@ Page({
       ? this.data.annualData
       : this.data.quarterlyData;
 
-    // 季报反累计：by_report_em 返回的是累计值，要减成单季
     if (period === 'quarterly') {
       source = source.map((r, i, arr) => {
         const raw = r[field] != null ? Number(r[field]) : 0;
         let val = raw;
         if (i > 0 && arr[i - 1].fiscal_year === r.fiscal_year) {
           const prev = arr[i - 1][field] != null ? Number(arr[i - 1][field]) : 0;
-          val = raw - prev;  // 本期累计 - 上期累计 = 本期单季
+          val = raw - prev;
         }
         return { ...r, [field]: val };
       });
     }
 
-    // 最多显示最近 12 条
     if (source.length > 12) source = source.slice(-12);
 
-    const data = source.map((r, i) => {
-      const val = r[field] != null ? Number(r[field]) : 0;
+    const vals = source.map(r => Math.abs(r[field] != null ? Number(r[field]) : 0));
+    const max = Math.max(...vals, 1);
+
+    const bars = source.map((r, i) => {
+      const v = r[field] != null ? Number(r[field]) : 0;
       let yoy = null;
       if (period === 'quarterly') {
         const thisQ = r.report_date;
         const prevYear = source.find(s => s.report_date === thisQ.replace(/^\d{4}/, m => String(Number(m) - 1)));
         if (prevYear && prevYear[field] != null && prevYear[field] !== 0) {
-          yoy = (val - Number(prevYear[field])) / Math.abs(Number(prevYear[field]));
+          yoy = (v - Number(prevYear[field])) / Math.abs(Number(prevYear[field]));
         }
       } else if (i > 0 && source[i - 1][field] != null && source[i - 1][field] !== 0) {
         const prev = Number(source[i - 1][field]);
-        yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
+        yoy = prev !== 0 ? (v - prev) / Math.abs(prev) : null;
       }
-      const label = period === 'annual'
-        ? r.fiscal_year
-        : (r.report_date || '').substring(0, 7);
-      return { year: label, value: val, yoy };
+      return {
+        year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
+        _h: Math.round((Math.abs(v) / max) * 100),
+        _neg: v < 0,
+        _val: this._fmtAmount(v),
+        _lbl: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
+        _yTxt: yoy != null ? (yoy >= 0 ? '+' : '') + (yoy * 100).toFixed(1) + '%' : '',
+        _yUp: yoy != null && yoy >= 0,
+        _yDn: yoy != null && yoy < 0,
+        _yNone: yoy == null,
+      };
     });
-    this.setData({ chartMetricName: name, chartMetricData: data, chartField: field });
+
+    this.setData({ chartMetricName: name, chartBars: bars, chartField: field });
+  },
+
+  _fmtAmount(v) {
+    if (v == null) return '--';
+    const n = Math.abs(v);
+    if (n >= 1e8) return (v / 1e8).toFixed(1) + '亿';
+    if (n >= 1e4) return (v / 1e4).toFixed(1) + '万';
+    return v.toFixed(0);
   },
 
   onHideMetricChart() {
