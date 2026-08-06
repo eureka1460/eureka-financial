@@ -2,7 +2,7 @@
   <text class="chart-title text-sm font-bold">{{title}}</text>
 
   <scroll-view scroll-x enhanced show-scrollbar class="chart-scroll">
-    <view class="chart-body {{bars.length > 8 ? 'chart-wide' : ''}}">
+    <view class="chart-body {{bars.length > 6 ? 'chart-wide' : ''}}">
       <view class="bar-col" wx:for="{{bars}}" wx:key="year">
       <!-- 同比 -->
       <text wx:if="{{item.yoyText}}" class="yoy-tag {{item.yoyDown ? 'yoy-down' : 'yoy-up'}}">{{item.yoyText}}</text>
