@@ -1,8 +1,9 @@
 <view class="chart-card" wx:if="{{bars.length > 0}}">
   <text class="chart-title text-sm font-bold">{{title}}</text>
 
-  <view class="chart-body">
-    <view class="bar-col" wx:for="{{bars}}" wx:key="year">
+  <scroll-view scroll-x enhanced show-scrollbar class="chart-scroll">
+    <view class="chart-body {{bars.length > 8 ? 'chart-wide' : ''}}">
+      <view class="bar-col" wx:for="{{bars}}" wx:key="year">
       <!-- 同比 -->
       <text wx:if="{{item.yoyText}}" class="yoy-tag {{item.yoyDown ? 'yoy-down' : 'yoy-up'}}">{{item.yoyText}}</text>
       <text wx:else class="yoy-tag yoy-none">--</text>
@@ -23,4 +24,5 @@
       <text class="bar-year">{{item.year}}</text>
     </view>
   </view>
+  </scroll-view>
 </view>

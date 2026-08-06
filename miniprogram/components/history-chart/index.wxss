@@ -10,15 +10,19 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.chart-scroll { width: 100%; }
+
 .chart-body {
   display: flex;
   justify-content: space-around;
   align-items: stretch;
   height: 300rpx;
 }
+.chart-wide { min-width: 1000rpx; }
 
 .bar-col {
   flex: 1;
+  min-width: 80rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
