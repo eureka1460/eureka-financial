@@ -1,19 +1,30 @@
 <view class="ch" wx:if="{{list.length > 0}}">
-  <text class="ch-t">{{title}}</text>
   <view class="ch-scroll">
     <view class="ch-body">
-      <view class="ch-col" wx:for="{{list}}" wx:key="year">
-        <text class="ch-yoy {{item._yoyCls || ''}}">{{item._yoyTxt || ''}}</text>
-        <view class="ch-bar-wrap">
-          <view class="ch-bar {{item._neg ? 'ch-bar-neg' : ''}}" style="height: {{item._h}}%; background: {{item._neg ? '#EF4444' : item._color}};"></view>
+      <view class="ch-col" wx:for="{{list}}" wx:key="year" wx:for-index="i">
+        <!-- 同比标签（浮在柱子上方） -->
+        <text class="ch-yoy {{item._yoyUp ? 'text-up' : ''}}{{item._yoyDn ? 'text-down' : ''}}{{item._yoyNone ? 'text-muted' : ''}}">
+          {{item._yoy || '--'}}
+        </text>
+
+        <!-- 折线连接器 -->
+        <view wx:if="{{item._lineDeg != null}}" class="ch-line"
+          style="transform: rotate({{item._lineDeg}}deg); width: {{item._lineLen}}rpx;">
         </view>
+
+        <!-- 柱子 -->
+        <view class="ch-bar-wrap">
+          <view class="ch-bar {{item._neg ? 'ch-bar-neg' : ''}}"
+            style="height: {{item._h}}%; background: {{item._neg ? '#EF4444' : color}};">
+          </view>
+        </view>
+
+        <!-- 绝对值 -->
         <text class="ch-val">{{item._val}}</text>
-        <text class="ch-yr">{{item._lbl}}</text>
+
+        <!-- 年份/季度 -->
+        <text class="ch-yr">{{item.year}}</text>
       </view>
     </view>
-  </view>
-  <view class="ch-legend flex gap-md justify-center text-xs text-muted">
-    <text>█ 绝对值</text>
-    <text wx:if="{{hasLine}}">● 同比</text>
   </view>
 </view>
