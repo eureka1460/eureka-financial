@@ -1,13 +1,10 @@
 <view class="page">
   <view wx:if="{{loading}}" class="loading-text">加载中...</view>
-
   <view wx:elif="{{error}}" class="empty-state">
     <text class="text">⚠️ {{error}}</text>
     <button class="btn btn-outline" style="margin-top:24rpx" bindtap="onRetry">重试</button>
   </view>
-
   <block wx:else>
-    <!-- 股票头部 -->
     <view class="header card">
       <view class="flex justify-between items-center">
         <view><text class="text-2xl font-bold">{{stock.name}}</text><text class="text-sm text-secondary" style="margin-left:12rpx">{{stock.symbol}}</text></view>
@@ -15,8 +12,6 @@
       </view>
       <view class="text-xs text-muted" style="margin-top:4rpx">{{stock.industry || '行业未知'}}</view>
     </view>
-
-    <!-- 多期数据对比表 -->
     <view class="card">
       <text class="text-md font-bold" style="margin-bottom:16rpx;display:block">财务数据对比</text>
       <scroll-view scroll-x class="table-scroll">
@@ -31,10 +26,7 @@
           </view>
         </view>
       </scroll-view>
-      <view class="text-xs text-muted" style="text-align:center;margin-top:12rpx">点击任意指标行查看历年趋势图表 ▼</view>
     </view>
-
-    <!-- 内联柱状图 + 折线 -->
     <view wx:if="{{chartMetricName}}" class="card">
       <view class="flex justify-between items-center" style="margin-bottom:8rpx">
         <text class="text-md font-bold">{{chartMetricName}}</text>
@@ -46,22 +38,22 @@
       </view>
       <view class="ch-scroll">
         <view class="ch-body" style="min-width:{{chartMinW}}px;">
-          <!-- 柱子 -->
-          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
-            <view class="ch-bar-wrap">
-              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#EAB308'}};">
-                <text wx:if="{{item._yTxt && item._h > 30}}" class="ch-yoy-on-bar {{item._yDn ? 'text-down' : 'text-up'}}">{{item._yTxt}}</text>
+          <view class="ch-axis-l"><text class="ch-al" wx:for="{{yLabels}}" wx:key="*this">{{item}}</text></view>
+          <view class="ch-plot">
+            <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
+              <view class="ch-bar-wrap">
+                <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};">
+                  <text wx:if="{{item._yTxt && item._h > 30}}" class="ch-yoy-on-bar {{item._yDn ? 'text-down' : 'text-up'}}">{{item._yTxt}}</text>
+                </view>
               </view>
+              <text class="ch-yr">{{item._lbl}}</text>
             </view>
-            <text class="ch-yr">{{item._lbl}}</text>
           </view>
-          <!-- 点击气泡 -->
+          <view class="ch-axis-r"><text class="ch-al" wx:for="{{yLabelsR}}" wx:key="*this">{{item}}</text></view>
           <view wx:if="{{tooltip}}" class="ch-tip" style="left:{{tooltip.x}}%;">{{tooltip.txt}}</view>
         </view>
       </view>
     </view>
-
-    <!-- 帮助弹窗 -->
     <view wx:if="{{helpText}}" class="help-overlay" bindtap="onCloseHelp">
       <view class="help-box" catchtap="">
         <text class="text-md font-bold" style="margin-bottom:16rpx;display:block">{{helpName}}</text>
@@ -69,8 +61,6 @@
         <button class="btn btn-primary" style="margin-top:20rpx;width:100%" bindtap="onCloseHelp">知道了</button>
       </view>
     </view>
-
-    <!-- 核心指标图表（折叠） -->
     <view class="card">
       <view class="flex justify-between items-center" bindtap="onToggleCharts">
         <text class="text-md font-bold">核心指标图表</text>

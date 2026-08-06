@@ -74,6 +74,8 @@ Page({
     chartLines: [],
     chartField: '',
     tooltip: null,
+    yLabels: [],
+    yLabelsR: [],
     chartPeriod: 'annual',
     annualData: [],
     quarterlyData: [],
@@ -250,11 +252,14 @@ Page({
         const prev = Number(source[i - 1][field]);
         yoy = prev !== 0 ? (v - prev) / Math.abs(prev) : null;
       }
-      // 290rpx 容器，减去头上48rpx标签区，最大柱高 200rpx
+      // 最大柱高 200rpx，Y轴范围 = max * 1.25
       const barMax = 200;
+      const axisMax = max * 1.25;
+      const yLabels = [this._fmtAmount(axisMax), this._fmtAmount(axisMax*0.75), this._fmtAmount(axisMax*0.5), this._fmtAmount(axisMax*0.25), '0'];
+      const yLabelsR = chartPeriod === 'annual' ? yLabels.map(() => '') : ['+50%','+25%','0%','-25%','-50%'];
       return {
         year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
-        _h: Math.max(Math.round((Math.abs(v) / max) * barMax), 4),
+        _h: Math.max(Math.round((Math.abs(v) / axisMax) * barMax), 4),
         _neg: v < 0,
         _val: this._fmtAmount(v),
         _lbl: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
@@ -298,7 +303,7 @@ Page({
     this.setData({
       chartMetricName: name, chartBars: bars, chartField: field,
       chartColW: colW, chartMinW: bars.length * colW,
-      chartDots: dots.filter(d => d), chartLines: lines,
+      yLabels, yLabelsR,
     });
   },
 
