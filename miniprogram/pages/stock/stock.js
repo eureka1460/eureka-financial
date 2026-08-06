@@ -215,7 +215,6 @@ Page({
     const data = source.map((r, i) => {
       const val = r[field] != null ? Number(r[field]) : 0;
       let yoy = null;
-      // 季报同比：找上年同期
       if (period === 'quarterly') {
         const thisQ = r.report_date;
         const prevYear = source.find(s => s.report_date === thisQ.replace(/^\d{4}/, m => String(Number(m) - 1)));
