@@ -54,7 +54,8 @@
 .ch-body { display: flex; align-items: flex-end; padding: 8rpx 0 0; min-width: 500px; height: 250rpx; position: relative; }
 .ch-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 50px; }
 .ch-bar-wrap { width: 35%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-.ch-bar { width: 100%; border-radius: 3rpx 3rpx 0 0; min-height: 4rpx; }
+.ch-bar { width: 100%; border-radius: 3rpx 3rpx 0 0; min-height: 4rpx; display:flex; align-items:center; justify-content:center; }
+.ch-yoy-on-bar { font-size:18rpx; font-weight:700; text-shadow:0 0 4rpx #fff; }
 .ch-bar-red { border-radius: 0 0 3rpx 3rpx; }
 .ch-yr { font-size: 20rpx; color: var(--color-text-muted); margin-top: 2rpx; }
 
