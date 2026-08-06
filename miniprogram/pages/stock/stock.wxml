@@ -38,18 +38,14 @@
       </view>
       <view class="ch-scroll">
         <view class="ch-body" style="min-width:{{chartMinW}}px;">
-          <view class="ch-axis-l"><text class="ch-al" wx:for="{{yLabels}}" wx:key="*this">{{item}}</text></view>
-          <view class="ch-plot">
-            <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
-              <view class="ch-bar-wrap">
-                <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};">
-                  <text wx:if="{{item._yTxt && item._h > 30}}" class="ch-yoy-on-bar {{item._yDn ? 'text-down' : 'text-up'}}">{{item._yTxt}}</text>
-                </view>
+          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
+            <view class="ch-bar-wrap">
+              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};">
+                <text wx:if="{{item._yTxt && item._h > 30}}" class="ch-yoy-on-bar {{item._yDn ? 'text-down' : 'text-up'}}">{{item._yTxt}}</text>
               </view>
-              <text class="ch-yr">{{item._lbl}}</text>
             </view>
+            <text class="ch-yr">{{item._lbl}}</text>
           </view>
-          <view class="ch-axis-r"><text class="ch-al" wx:for="{{yLabelsR}}" wx:key="*this">{{item}}</text></view>
           <view wx:if="{{tooltip}}" class="ch-tip" style="left:{{tooltip.x}}%;">{{tooltip.txt}}</view>
         </view>
       </view>

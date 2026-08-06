@@ -256,7 +256,7 @@ Page({
       const barMax = 200;
       const axisMax = max * 1.25;
       const yLabels = [this._fmtAmount(axisMax), this._fmtAmount(axisMax*0.75), this._fmtAmount(axisMax*0.5), this._fmtAmount(axisMax*0.25), '0'];
-      const yLabelsR = chartPeriod === 'annual' ? yLabels.map(() => '') : ['+50%','+25%','0%','-25%','-50%'];
+      const yLabelsR = period === 'annual' ? yLabels.map(() => '') : ['+50%','+25%','0%','-25%','-50%'];
       return {
         year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
         _h: Math.max(Math.round((Math.abs(v) / axisMax) * barMax), 4),
