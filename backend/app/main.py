@@ -87,6 +87,24 @@ def test_akshare():
         })
 
 
+@app.get("/api/v1/test-ths")
+def test_ths():
+    """测试同花顺财务指标接口。"""
+    try:
+        import akshare as ak
+        df = ak.stock_financial_abstract_ths(symbol="000333", indicator="按报告期")
+        return JSONResponse({
+            "code": 200,
+            "message": f"ok, {len(df)} rows, {len(df.columns)} cols",
+            "data": {"columns": list(df.columns)[:20], "row0": str(df.iloc[0].to_dict()) if len(df) > 0 else "empty"},
+        })
+    except Exception as e:
+        return JSONResponse({
+            "code": 500,
+            "message": f"{type(e).__name__}: {e}",
+        })
+
+
 @app.get("/")
 @app.get("/api/v1/health")
 def health_check():
