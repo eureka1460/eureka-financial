@@ -73,6 +73,7 @@ Page({
     chartDots: [],
     chartLines: [],
     chartField: '',
+    tooltip: null,
     chartPeriod: 'annual',
     annualData: [],
     quarterlyData: [],
@@ -187,6 +188,24 @@ Page({
     const field = e.currentTarget.dataset.field;
     const name = e.currentTarget.dataset.name;
     this.showChart(field, name, this.data.chartPeriod);
+  },
+
+  onBarTap(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const bar = this.data.chartBars[idx];
+    if (!bar) return;
+    // 关闭
+    if (this.data.tooltip && this.data.tooltip.idx === idx) {
+      this.setData({ tooltip: null });
+      return;
+    }
+    const x = ((idx + 0.5) / this.data.chartBars.length) * 100;
+    this.setData({
+      tooltip: {
+        idx, x,
+        txt: bar._lbl + '\n  ' + bar._val + '\n' + (bar._yTxt || '同比 --'),
+      },
+    });
   },
 
   onToggleChartPeriod() {

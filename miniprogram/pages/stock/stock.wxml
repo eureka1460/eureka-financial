@@ -60,14 +60,14 @@
             ></view>
           </view>
           <!-- 柱子 -->
-          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;">
-            <text class="ch-yoy {{item._yUp || ''}}{{item._yDn || ''}}{{item._yNone || ''}}">{{item._yTxt || ''}}</text>
+          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
             <view class="ch-bar-wrap">
               <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};"></view>
             </view>
-            <text class="ch-val">{{item._val}}</text>
             <text class="ch-yr">{{item._lbl}}</text>
           </view>
+          <!-- 点击弹出的气泡 -->
+          <view wx:if="{{tooltip}}" class="ch-tip" style="left:{{tooltip.x}}%;">{{tooltip.txt}}</view>
         </view>
       </view>
     </view>

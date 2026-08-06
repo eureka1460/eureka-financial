@@ -63,3 +63,10 @@
 
 .tag-pill { font-size:22rpx; padding:2rpx 12rpx; border-radius:999rpx; border:1rpx solid var(--color-border); color:var(--color-text-secondary); }
 .pill-on { background:var(--color-accent); color:#fff; border-color:var(--color-accent); }
+
+.ch-tip {
+  position: absolute; top: 10rpx; transform: translateX(-50%);
+  background: rgba(0,0,0,0.85); color: #fff; font-size: 22rpx;
+  padding: 8rpx 16rpx; border-radius: 8rpx; white-space: pre-line;
+  z-index: 10; pointer-events: none; line-height: 1.4;
+}
