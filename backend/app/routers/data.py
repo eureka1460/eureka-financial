@@ -408,9 +408,18 @@ def debug_etl(db: Session = Depends(get_db)):
             merged = cleaner.merge_statements(bs_clean, inc_clean, cf_clean, symbol)
             result["merged"] = {"rows": len(merged), "cols": list(merged.columns)[:10]}
             loader = DataLoader(db)
+            # 逐条试第一条
+            import traceback
+            first = merged.iloc[0].to_dict()
+            result["first"] = {k: str(v)[:50] for k, v in first.items() if v is not None}
+            try:
+                loader._upsert(FinancialStatement, first, ["symbol","report_date","report_type"])
+                result["test_upsert"] = "ok"
+            except Exception as e:
+                result["test_upsert"] = f"{type(e).__name__}: {e}"
+                result["traceback"] = traceback.format_exc()[-500:]
+            db.rollback()
             count = loader.upsert_financials(merged)
-            first_row = merged.iloc[0].to_dict() if len(merged) > 0 else {}
-            result["first_row"] = {k: str(v) for k, v in list(first_row.items())[:8]}
             result["upsert"] = {"success": True, "inserted": count}
         else:
             result["skip"] = "三表不全，无合并数据"
