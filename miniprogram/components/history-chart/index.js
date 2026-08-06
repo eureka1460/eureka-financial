@@ -35,7 +35,7 @@ Component({
         const ctx = canvas.getContext('2d');
         const dpr = wx.getSystemInfoSync().pixelRatio;
         const w = this.data.chartWidth;
-        const h = 280;
+        const h = 220;
         canvas.width = w * dpr;
         canvas.height = h * dpr;
         ctx.scale(dpr, dpr);
