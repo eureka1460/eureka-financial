@@ -3,26 +3,25 @@
 
   <scroll-view scroll-x enhanced show-scrollbar class="chart-scroll">
     <view class="chart-body {{bars.length > 6 ? 'chart-wide' : ''}}">
+
       <view class="bar-col" wx:for="{{bars}}" wx:key="year">
-      <!-- 同比 -->
-      <text wx:if="{{item.yoyText}}" class="yoy-tag {{item.yoyDown ? 'yoy-down' : 'yoy-up'}}">{{item.yoyText}}</text>
-      <text wx:else class="yoy-tag yoy-none">--</text>
+        <!-- 同比折线点（在柱子上方） -->
+        <text wx:if="{{item.yoyText}}" class="yoy-dot {{item.yoyDown ? 'text-down' : 'text-up'}}">{{item.yoyText}}</text>
+        <text wx:else class="yoy-dot yoy-none">--</text>
 
-      <!-- 正数：数值在上，柱子向下到基线 -->
-      <text wx:if="{{!item.isNeg}}" class="bar-val-top">{{item.displayVal}}</text>
-      <view wx:if="{{!item.isNeg}}" class="bar-pos-box">
-        <view class="bar bar-pos" style="height: {{item.height}}%; background: {{color}};"></view>
+        <!-- 柱子 -->
+        <text wx:if="{{!item.isNeg}}" class="bar-val-top">{{item.displayVal}}</text>
+        <view wx:if="{{!item.isNeg}}" class="bar-pos-box">
+          <view class="bar bar-pos" style="height: {{item.height}}%; background: {{color}};"></view>
+        </view>
+        <view wx:if="{{item.isNeg}}" class="bar-neg-box">
+          <view class="bar bar-neg" style="height: {{item.height}}%; background: #EF4444;"></view>
+        </view>
+        <text wx:if="{{item.isNeg}}" class="bar-val-neg text-down">{{item.displayVal}}</text>
+
+        <text class="bar-year">{{item.year}}</text>
       </view>
 
-      <!-- 负数：柱子从基线下到下，数值在底部 -->
-      <view wx:if="{{item.isNeg}}" class="bar-neg-box">
-        <view class="bar bar-neg" style="height: {{item.height}}%; background: #EF4444;"></view>
-      </view>
-      <text wx:if="{{item.isNeg}}" class="bar-val-neg text-down">{{item.displayVal}}</text>
-
-      <!-- 年份 -->
-      <text class="bar-year">{{item.year}}</text>
     </view>
-  </view>
   </scroll-view>
 </view>

@@ -1,5 +1,5 @@
 /**
- * history-chart 组件 — 历年财务数据柱状图（支持正负值）
+ * history-chart 组件 — 柱状图 + 同比折线叠加
  */
 Component({
   properties: {
@@ -10,9 +10,8 @@ Component({
   },
 
   data: {
-    bars: [],
-    maxVal: 1,
-    hasNegative: false,
+    bars: [], maxVal: 1, hasNegative: false,
+    linePoints: [], lineMax: 1, lineMin: 0, showLine: false,
   },
 
   observers: {
@@ -21,6 +20,7 @@ Component({
       const absVals = list.map((d) => Math.abs(d.value || 0));
       const max = Math.max(...absVals, 1);
       const hasNeg = list.some((d) => (d.value || 0) < 0);
+
       const bars = list.map((d) => {
         const v = d.value || 0;
         return {
@@ -32,7 +32,27 @@ Component({
           yoyDown: d.yoy != null && d.yoy < 0,
         };
       });
-      this.setData({ bars, maxVal: max, hasNegative: hasNeg });
+
+      // 折线：同比数据
+      const yoys = list.map((d) => d.yoy).filter((y) => y != null);
+      const showLine = yoys.length >= 2;
+      let lineMax = 1, lineMin = 0, linePoints = [];
+      if (showLine) {
+        const absYoys = yoys.map((y) => Math.abs(y));
+        const m = Math.max(...absYoys, 0.01);
+        lineMax = m * 1.3;
+        lineMin = -lineMax;
+        linePoints = list.map((d) => {
+          if (d.yoy == null) return { x: 0, y: 50, label: '' };
+          return {
+            y: 50 - (d.yoy / lineMax) * 45,
+            label: (d.yoy >= 0 ? '+' : '') + (d.yoy * 100).toFixed(1) + '%',
+            isDown: d.yoy < 0,
+          };
+        });
+      }
+
+      this.setData({ bars, maxVal: max, hasNegative: hasNeg, linePoints, lineMax, lineMin, showLine });
     },
   },
 

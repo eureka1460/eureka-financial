@@ -1,3 +1,20 @@
+.yoy-dot {
+  font-size: 20rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  position: relative;
+  padding-top: 4rpx;
+}
+.yoy-dot::before {
+  content: '';
+  display: block;
+  width: 10rpx; height: 10rpx;
+  border-radius: 50%;
+  background: currentColor;
+  margin: 0 auto 2rpx auto;
+}
+
 .chart-card {
   margin: var(--spacing-md) 0;
   padding: var(--spacing-md);
