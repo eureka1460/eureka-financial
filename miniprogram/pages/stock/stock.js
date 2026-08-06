@@ -203,7 +203,7 @@ Page({
     this.setData({
       tooltip: {
         idx, x,
-        txt: bar._lbl + '\n  ' + bar._val + '\n' + (bar._yTxt || '同比 --'),
+        txt: bar._lbl + '  |  ' + bar._val + '  |  ' + (bar._yTxt || '同比 --'),
       },
     });
   },
