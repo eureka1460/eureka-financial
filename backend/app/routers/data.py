@@ -409,6 +409,8 @@ def debug_etl(db: Session = Depends(get_db)):
             result["merged"] = {"rows": len(merged), "cols": list(merged.columns)[:10]}
             loader = DataLoader(db)
             count = loader.upsert_financials(merged)
+            first_row = merged.iloc[0].to_dict() if len(merged) > 0 else {}
+            result["first_row"] = {k: str(v) for k, v in list(first_row.items())[:8]}
             result["upsert"] = {"success": True, "inserted": count}
         else:
             result["skip"] = "三表不全，无合并数据"
