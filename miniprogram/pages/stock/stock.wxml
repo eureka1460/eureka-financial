@@ -61,7 +61,7 @@
         <view class="tag {{chartPeriod === 'annual' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">年报</view>
         <view class="tag {{chartPeriod === 'quarterly' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">季报</view>
       </view>
-      <history-chart title="" data="{{chartMetricData}}" color="#F59E0B" />
+      <history-chart title="" chartData="{{chartMetricData}}" color="#F59E0B" />
     </view>
 
     <!-- 帮助弹窗 -->
@@ -80,9 +80,9 @@
         <text class="text-sm text-secondary">{{showCharts ? '收起 ▲' : '展开 ▼'}}</text>
       </view>
       <view wx:if="{{showCharts}}">
-        <history-chart title="营业总收入" data="{{chartRevenue}}" color="#3B82F6" />
-        <history-chart title="归母净利润" data="{{chartProfit}}" color="#22C55E" />
-        <history-chart title="ROE" data="{{chartROE}}" color="#8B5CF6" />
+        <history-chart title="营业总收入" chartData="{{chartRevenue}}" color="#3B82F6" />
+        <history-chart title="归母净利润" chartData="{{chartProfit}}" color="#22C55E" />
+        <history-chart title="ROE" chartData="{{chartROE}}" color="#8B5CF6" />
       </view>
     </view>
   </block>

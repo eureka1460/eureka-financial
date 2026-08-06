@@ -4,14 +4,14 @@
 Component({
   properties: {
     title: { type: String, value: '' },
-    data: { type: Array, value: [] },
+    chartData: { type: Array, value: [] },
     color: { type: String, value: '#3B82F6' },
   },
 
   data: { list: [], hasLine: false },
 
   observers: {
-    'data'(raw) {
+    'chartData'(raw) {
       if (!raw || raw.length === 0) return;
       const vals = raw.map(d => Math.abs(d.value || 0));
       const max = Math.max(...vals, 1);
