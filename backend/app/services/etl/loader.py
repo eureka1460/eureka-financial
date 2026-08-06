@@ -222,19 +222,16 @@ class DataLoader:
                 # 构建全年汇总（用四个季度之和）
                 annual_stmt = self._build_annual_from_quarters(s, quarters)
 
-                # 上年指标（同时存 ORM 对象和年度汇总 dict）
+                # 上年年报 ORM（用于 YoY 对比）
                 prev_key = (fy - 1, "annual")
-                prev_data = prev_map.get(prev_key)
-                prev_annual_stmt = prev_data["orm"] if prev_data else None
-                prev_annual_data = prev_data["annual"] if prev_data else None
+                prev_annual_stmt = prev_map.get(prev_key)
 
                 indicators = self._compute_annual_indicators(
-                    annual_stmt, quarters, prev_annual_stmt, prev_annual_data
+                    annual_stmt, quarters, prev_annual_stmt, prev_annual_data=None
                 )
                 if indicators:
                     self._upsert_indicator(indicators)
-                    # 登记到 prev_map：同时存 ORM 对象（用于资产负债表参考）和年度汇总（用于 P&L YoY）
-                    prev_map[(fy, "annual")] = {"orm": s, "annual": annual_stmt}
+                    prev_map[(fy, "annual")] = s
                     count += 1
             except Exception as e:
                 logger.error(f"{symbol} FY{s.fiscal_year} 指标计算失败: {e}")
@@ -345,11 +342,11 @@ class DataLoader:
             if op_profit != 0:
                 ind["operating_margin"] = op_profit / rev
 
-        # ── 成长能力 ──
-        if prev_annual_data:
-            prev_rev = prev_annual_data.get("operating_revenue", 0) or 0
-            prev_profit = prev_annual_data.get("net_profit_attr_parent", 0) or 0
-            prev_op = prev_annual_data.get("operating_profit", 0) or 0
+        # ── 成长能力 ──（直接从上年 ORM 取全年值，_by_report_em 中 Q4 = 全年）
+        if prev_annual_stmt:
+            prev_rev = self._f(prev_annual_stmt.operating_revenue) or 0
+            prev_profit = self._f(prev_annual_stmt.net_profit_attr_parent) or 0
+            prev_op = self._f(prev_annual_stmt.operating_profit) or 0
 
             if prev_rev > 0 and rev > 0:
                 ind["revenue_yoy"] = (rev - prev_rev) / prev_rev
