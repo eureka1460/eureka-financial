@@ -29,7 +29,11 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context):
         if not self.DATABASE_URL:
-            self.DATABASE_URL = "mysql+pymysql://root1:14601554%25qin@sh-cynosdbmysql-grp-miggvbtm.sql.tencentcdb.com:26657/cloud1-d2gaskev55a202518"
+            import os
+            if os.environ.get("MYSQL_HOST"):
+                self.DATABASE_URL = "mysql+pymysql://root1:14601554%25qin@sh-cynosdbmysql-grp-miggvbtm.sql.tencentcdb.com:26657/cloud1-d2gaskev55a202518"
+            else:
+                self.DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"
 
     # ── 数据库 ────────────────────────────────────────────
     # 开发阶段默认 SQLite，云托管部署时设 MYSQL_HOST 切 MySQL

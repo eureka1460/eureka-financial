@@ -68,8 +68,8 @@ INCOME_STATEMENT_MAPPING = {
     "REPORT_DATE": "report_date",
     "REPORT_TYPE": "report_type",
     # ── 收入与成本 ──
-    "TOTAL_OPERATE_INCOME": "operating_revenue",  # 营业总收入（顶行收入）★
-    "TOTAL_OPERATE_COST": "operating_cost",  # 营业总成本
+    "TOTAL_OPERATE_INCOME": "operating_revenue",  # 营业总收入
+    "OPERATE_COST": "operating_cost",  # 营业成本（COGS，用于计算毛利）★
     # ── 费用 ──
     "SALE_EXPENSE": "selling_expenses",  # 销售费用
     "MANAGE_EXPENSE": "administrative_expenses",  # 管理费用
