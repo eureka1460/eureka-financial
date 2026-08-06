@@ -41,7 +41,7 @@ Component({
         ctx.scale(dpr, dpr);
 
         // 边距
-        const L = 60, R = 50, T = 20, B = 30;
+        const L = 50, R = 45, T = 16, B = 24;
         const pw = w - L - R;
         const ph = h - T - B;
         const n = this.data.bars.length;

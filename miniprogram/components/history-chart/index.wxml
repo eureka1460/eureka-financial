@@ -1,6 +1,6 @@
 <view class="chart-card" wx:if="{{bars.length > 0}}">
-  <text class="chart-title text-sm font-bold">{{title}}</text>
-  <scroll-view scroll-x="true" enhanced show-scrollbar class="chart-scroll">
-    <canvas type="2d" id="chart-canvas" class="chart-canvas" style="width: {{chartWidth || 600}}px; height: 440rpx;"></canvas>
-  </scroll-view>
+  <text class="chart-title">{{title}}</text>
+  <view class="chart-scroll">
+    <canvas type="2d" id="chart-canvas" class="chart-canvas" style="width: {{chartWidth || 600}}px;"></canvas>
+  </view>
 </view>
