@@ -49,7 +49,7 @@
           <view class="ch-col" wx:for="{{chartBars}}" wx:key="year">
             <text class="ch-yoy {{item._yUp || ''}}{{item._yDn || ''}}{{item._yNone || ''}}">{{item._yTxt || ''}}</text>
             <view class="ch-bar-wrap">
-              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}%; background:{{item._neg ? '#EF4444' : '#3B82F6'}};"></view>
+              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};"></view>
             </view>
             <text class="ch-val">{{item._val}}</text>
             <text class="ch-yr">{{item._lbl}}</text>

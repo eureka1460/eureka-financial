@@ -227,9 +227,11 @@ Page({
         const prev = Number(source[i - 1][field]);
         yoy = prev !== 0 ? (v - prev) / Math.abs(prev) : null;
       }
+      // 240rpx 容器高度，减去标签空间 ~40rpx，最大柱高 180rpx
+      const barMax = 180;
       return {
         year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
-        _h: Math.round((Math.abs(v) / max) * 100),
+        _h: Math.max(Math.round((Math.abs(v) / max) * barMax), 4),
         _neg: v < 0,
         _val: this._fmtAmount(v),
         _lbl: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
