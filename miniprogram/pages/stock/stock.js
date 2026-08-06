@@ -215,7 +215,14 @@ Page({
     const data = source.map((r, i) => {
       const val = r[field] != null ? Number(r[field]) : 0;
       let yoy = null;
-      if (period === 'annual' && i > 0 && source[i - 1][field] != null && source[i - 1][field] !== 0) {
+      // 季报同比：找上年同期
+      if (period === 'quarterly') {
+        const thisQ = r.report_date;
+        const prevYear = source.find(s => s.report_date === thisQ.replace(/^\d{4}/, m => String(Number(m) - 1)));
+        if (prevYear && prevYear[field] != null && prevYear[field] !== 0) {
+          yoy = (val - Number(prevYear[field])) / Math.abs(Number(prevYear[field]));
+        }
+      } else if (i > 0 && source[i - 1][field] != null && source[i - 1][field] !== 0) {
         const prev = Number(source[i - 1][field]);
         yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
       }
