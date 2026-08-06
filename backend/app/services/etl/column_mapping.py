@@ -68,14 +68,14 @@ INCOME_STATEMENT_MAPPING = {
     "REPORT_DATE": "report_date",
     "REPORT_TYPE": "report_type",
     # ── 收入与成本 ──
-    "TOTAL_OPERATE_INCOME": "operating_revenue",  # 营业总收入
+    "TOTAL_OPERATE_INCOME": "operating_revenue",  # 营业总收入（顶行收入）★
     "TOTAL_OPERATE_COST": "operating_cost",  # 营业总成本
     # ── 费用 ──
     "SALE_EXPENSE": "selling_expenses",  # 销售费用
     "MANAGE_EXPENSE": "administrative_expenses",  # 管理费用
     "RD_EXPENSE": "r_and_d_expenses",  # 研发费用
     "FINANCE_EXPENSE": "financial_expenses",  # 财务费用（利润表）
-    "FE_INTEREST_EXPENSE": "interest_expense",  # 利息费用
+    "FE_INTEREST_EXPENSE": "interest_expense",  # 利息费用（明细）
     # ── 其他收支 ──
     "INVEST_INCOME": "investment_income",  # 投资收益
     "FAIRVALUE_CHANGE_INCOME": "fair_value_change",  # 公允价值变动收益
@@ -86,7 +86,7 @@ INCOME_STATEMENT_MAPPING = {
     "OPERATE_PROFIT": "operating_profit",  # 营业利润
     "TOTAL_PROFIT": "total_profit",  # 利润总额
     "INCOME_TAX": "income_tax_expense",  # 所得税费用
-    "NETPROFIT": "net_profit",  # 净利润
+    "NETPROFIT": "net_profit",  # 净利润（含少数股东）
     "PARENT_NETPROFIT": "net_profit_attr_parent",  # 归母净利润
     "DEDUCT_PARENT_NETPROFIT": "net_profit_excl_nonrecurring",  # 扣非归母净利润
     "MINORITY_PROFIT": "minority_profit",  # 少数股东损益
@@ -95,7 +95,6 @@ INCOME_STATEMENT_MAPPING = {
     "DILUTED_EPS": "diluted_eps",  # 稀释每股收益
     # ── 其他 ──
     "OTHER_COMPRE_INCOME": "other_comprehensive_income",  # 其他综合收益
-    "TOTAL_COMPRE_INCOME": "other_comprehensive_income",
 }
 
 # ═══════════════════════════════════════════════════════════════
