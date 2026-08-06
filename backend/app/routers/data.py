@@ -344,3 +344,75 @@ def seed_mock_data(db: Session = Depends(get_db)):
             "companies": ["猴子科技(100001)", "猪模块(200002)", "太空探索技术(300003)"],
         },
     )
+
+
+# ═══════════════════════════════════════════════════════════════
+# ETL 调试
+# ═══════════════════════════════════════════════════════════════
+@router.post("/data/debug-etl", response_model=APIResponse[dict])
+def debug_etl(db: Session = Depends(get_db)):
+    """调试端点：单步执行 ETL 并返回各阶段结果。"""
+    from app.services.etl.fetcher import DataFetcher
+    from app.services.etl.cleaner import DataCleaner
+    from app.services.etl.loader import DataLoader
+
+    symbol = "600519"
+    fetcher = DataFetcher()
+    cleaner = DataCleaner()
+    result = {}
+
+    # 1. 抓取
+    try:
+        data = fetcher.fetch_all_for_stock(symbol)
+        result["fetch"] = {
+            "balance": len(data.get("balance_sheet", [])),
+            "income": len(data.get("income_statement", [])),
+            "cashflow": len(data.get("cash_flow", [])),
+        }
+    except Exception as e:
+        result["fetch_error"] = str(e)
+        return APIResponse(data=result)
+
+    # 2. 清洗
+    bs = data.get("balance_sheet")
+    inc = data.get("income_statement")
+    cf = data.get("cash_flow")
+
+    if bs is not None and len(bs) > 0:
+        try:
+            bs_clean = cleaner.clean_balance_sheet(bs, symbol)
+            result["clean_bs"] = {"rows": len(bs_clean), "cols": list(bs_clean.columns)[:10]}
+        except Exception as e:
+            result["clean_bs_error"] = f"{type(e).__name__}: {e}"
+
+    if inc is not None and len(inc) > 0:
+        try:
+            inc_clean = cleaner.clean_income_statement(inc, symbol)
+            result["clean_inc"] = {"rows": len(inc_clean), "cols": list(inc_clean.columns)[:10]}
+        except Exception as e:
+            result["clean_inc_error"] = f"{type(e).__name__}: {e}"
+
+    if cf is not None and len(cf) > 0:
+        try:
+            cf_clean = cleaner.clean_cash_flow(cf, symbol)
+            result["clean_cf"] = {"rows": len(cf_clean), "cols": list(cf_clean.columns)[:10]}
+        except Exception as e:
+            result["clean_cf_error"] = f"{type(e).__name__}: {e}"
+
+    # 3. 尝试入库 1 条
+    try:
+        if bs is not None and len(bs) > 0 and inc is not None and len(inc) > 0 and cf is not None and len(cf) > 0:
+            bs_clean = cleaner.clean_balance_sheet(bs, symbol)
+            inc_clean = cleaner.clean_income_statement(inc, symbol)
+            cf_clean = cleaner.clean_cash_flow(cf, symbol)
+            merged = cleaner.merge_statements(bs_clean, inc_clean, cf_clean, symbol)
+            result["merged"] = {"rows": len(merged), "cols": list(merged.columns)[:10]}
+            loader = DataLoader(db)
+            count = loader.upsert_financials(merged)
+            result["upsert"] = {"success": True, "inserted": count}
+        else:
+            result["skip"] = "三表不全，无合并数据"
+    except Exception as e:
+        result["upsert_error"] = f"{type(e).__name__}: {e}"
+
+    return APIResponse(data=result)
