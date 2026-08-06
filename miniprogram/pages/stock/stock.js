@@ -239,6 +239,11 @@ Page({
     const vals = source.map(r => Math.abs(r[field] != null ? Number(r[field]) : 0));
     const max = Math.max(...vals, 1);
 
+    const barMax = 200;
+    const axisMax = max * 1.25;
+    const yLabels = [this._fmtAmount(axisMax), this._fmtAmount(axisMax*0.75), this._fmtAmount(axisMax*0.5), this._fmtAmount(axisMax*0.25), '0'];
+    const yLabelsR = period === 'annual' ? yLabels.map(() => '') : ['+50%','+25%','0%','-25%','-50%'];
+
     const bars = source.map((r, i) => {
       const v = r[field] != null ? Number(r[field]) : 0;
       let yoy = null;
@@ -252,11 +257,6 @@ Page({
         const prev = Number(source[i - 1][field]);
         yoy = prev !== 0 ? (v - prev) / Math.abs(prev) : null;
       }
-      // 最大柱高 200rpx，Y轴范围 = max * 1.25
-      const barMax = 200;
-      const axisMax = max * 1.25;
-      const yLabels = [this._fmtAmount(axisMax), this._fmtAmount(axisMax*0.75), this._fmtAmount(axisMax*0.5), this._fmtAmount(axisMax*0.25), '0'];
-      const yLabelsR = period === 'annual' ? yLabels.map(() => '') : ['+50%','+25%','0%','-25%','-50%'];
       return {
         year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
         _h: Math.max(Math.round((Math.abs(v) / axisMax) * barMax), 4),
@@ -264,7 +264,6 @@ Page({
         _val: this._fmtAmount(v),
         _lbl: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
         _yTxt: yoy != null ? (yoy >= 0 ? '+' : '') + (yoy * 100).toFixed(1) + '%' : '',
-        _yUp: yoy != null && yoy >= 0,
         _yDn: yoy != null && yoy < 0,
         _yNone: yoy == null,
       };
