@@ -180,64 +180,95 @@ class DataLoader:
         logger.info(f"财务报表 upsert 完成: {count} 行 (跳过 {skipped} 行)")
         return count
 
-    # ── 计算指标 ──────────────────────────────────────────
+    # ── 指标获取（直接从 akshare 同花顺预计算接口）─────────
     def compute_and_store_indicators(self, symbol: str) -> int:
-        """为指定股票计算并存储年度指标。
+        """从 akshare 同花顺接口获取预计算财务指标，直接入库。
 
-        仅对年报（report_type='annual'）计算指标。
-        年报的利润表和现金流数据使用该财年四个季度的汇总值，
-        资产负债表使用 Q4 年报时点值。
+        同花顺已预计算：ROE/ROA/毛利率/净利率/流动比率/速动比率/
+        保守速动比率/资产负债率/权益乘数/每股净资产/EPS/存货周转率/
+        应收账款周转率/YoY增长率等，无需自行计算。
         """
-        # 获取所有报表
-        all_stmts = (
-            self.db.query(FinancialStatement)
-            .filter(FinancialStatement.symbol == symbol)
-            .order_by(FinancialStatement.report_date.asc())
-            .all()
-        )
-
-        if not all_stmts:
-            logger.warning(f"{symbol}: 无财务数据")
+        try:
+            import akshare as ak
+            df = ak.stock_financial_abstract_ths(symbol=symbol, indicator='按报告期')
+        except Exception as e:
+            logger.error(f"{symbol}: 同花顺指标抓取失败: {e}")
             return 0
 
-        # 按财年汇总季度数据
-        fy_quarters = {}
-        for s in all_stmts:
-            fy = s.fiscal_year
-            if fy not in fy_quarters:
-                fy_quarters[fy] = []
-            fy_quarters[fy].append(s)
+        if df is None or len(df) == 0:
+            return 0
 
-        # 构建上年指标映射（用于 YoY）
-        prev_map = {}
+        # 列名映射：中文列名 → 数据库字段
+        col_map = {
+            '报告期': '_date',
+            '净资产收益率': 'roe',
+            '总资产收益率': 'roa',
+            '销售毛利率': 'gross_margin',
+            '销售净利率': 'net_margin',
+            '营业利润率': 'operating_margin',
+            '营业收入同比增长率': 'revenue_yoy',
+            '净利润同比增长率': 'net_profit_yoy',
+            '营业利润同比增长率': 'operating_profit_yoy',
+            '基本每股收益同比增长率': 'eps_yoy',
+            '流动比率': 'current_ratio',
+            '速动比率': 'quick_ratio',
+            '保守速动比率': 'quick_ratio',  # 用保守速动作为默认
+            '资产负债率': 'debt_to_assets',
+            '产权比率': 'debt_to_equity',
+            '存货周转率': 'inventory_turnover',
+            '应收账款周转率': 'receivable_turnover',
+            '总资产周转率': 'asset_turnover',
+            '每股净资产': 'book_value_per_share',
+            '基本每股收益': 'basic_eps',
+        }
 
-        # 仅计算年报指标
-        annuals = [s for s in all_stmts if s.report_type == "annual"]
         count = 0
-        for s in annuals:
+        for _, row in df.iterrows():
             try:
-                fy = s.fiscal_year
-                quarters = fy_quarters.get(fy, [])
+                date_str = str(row.get('报告期', ''))
+                if len(date_str) < 10:
+                    continue
 
-                # 构建全年汇总（用四个季度之和）
-                annual_stmt = self._build_annual_from_quarters(s, quarters)
+                report_date = date_str[:10]
+                fy = int(report_date[:4])
 
-                # 上年年报 ORM（用于 YoY 对比）
-                prev_key = (fy - 1, "annual")
-                prev_annual_stmt = prev_map.get(prev_key)
+                # 推断 report_type
+                m = int(report_date[5:7])
+                d = int(report_date[8:10])
+                if m == 12 and d == 31: rt = 'annual'
+                elif m == 9 and d == 30: rt = 'q3'
+                elif m == 6 and d == 30: rt = 'semi_annual'
+                elif m == 3 and d == 31: rt = 'q1'
+                else: continue
 
-                indicators = self._compute_annual_indicators(
-                    annual_stmt, quarters, prev_annual_stmt, prev_annual_data=None
-                )
-                if indicators:
-                    self._upsert_indicator(indicators)
-                    prev_map[(fy, "annual")] = s
+                ind = {
+                    'symbol': symbol,
+                    'report_date': report_date,
+                    'report_type': rt,
+                    'fiscal_year': fy,
+                }
+
+                for cn_col, db_field in col_map.items():
+                    if cn_col in row.index and db_field != '_date':
+                        raw = row[cn_col]
+                        if raw is not None and raw != False and str(raw) not in ('', 'nan', 'False'):
+                            try:
+                                v = float(str(raw).replace('%', '').replace('亿', '').replace('万', '').replace('元', '').strip())
+                                # 百分比值归一化（>1 表示已是百分比显示如"15.5%"）
+                                if any(k in cn_col for k in ('收益率', '利润率', '率', '比')):
+                                    v = v / 100 if v > 1 else v
+                                ind[db_field] = round(v, 6)
+                            except (ValueError, TypeError):
+                                pass
+
+                if len(ind) > 5:
+                    self._upsert_indicator(ind)
                     count += 1
             except Exception as e:
-                logger.error(f"{symbol} FY{s.fiscal_year} 指标计算失败: {e}")
+                logger.error(f"{symbol} {date_str} 指标入库失败: {e}")
 
         self.db.commit()
-        logger.info(f"{symbol}: 指标计算完成，{count} 条年报")
+        logger.info(f"{symbol}: 同花顺指标入库 {count} 条")
         return count
 
     def _build_annual_from_quarters(
