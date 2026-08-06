@@ -35,7 +35,7 @@ Component({
         const ctx = canvas.getContext('2d');
         const dpr = wx.getSystemInfoSync().pixelRatio;
         const w = this.data.chartWidth;
-        const h = 220;
+        const h = 160;
         canvas.width = w * dpr;
         canvas.height = h * dpr;
         ctx.scale(dpr, dpr);
@@ -78,7 +78,7 @@ Component({
 
         // 左轴标签
         ctx.fillStyle = '#999';
-        ctx.font = '10px sans-serif';
+        ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
         for (let i = 0; i <= 4; i++) {
           const v = maxV * (4 - i) / 4;
@@ -146,7 +146,7 @@ Component({
             ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = p.yoy >= 0 ? '#166534' : '#991B1B';
-            ctx.font = '10px sans-serif';
+            ctx.font = '9px sans-serif';
             ctx.textAlign = 'center';
             const txt = (p.yoy >= 0 ? '+' : '') + (p.yoy * 100).toFixed(1) + '%';
             ctx.fillText(txt, p.x, p.y - 10);

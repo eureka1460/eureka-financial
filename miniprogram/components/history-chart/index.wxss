@@ -1,9 +1,9 @@
 .chart-card {
-  margin: var(--spacing-md) 0;
-  padding: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-sm);
   background: var(--color-surface);
   border-radius: var(--radius-sm);
 }
-.chart-title { display: block; margin-bottom: 12rpx; }
-.chart-scroll { width: 100%; white-space: nowrap; overflow-x: auto; }
-.chart-canvas { display: block; }
+.chart-title { display: block; margin-bottom: 4rpx; font-size: 24rpx; }
+.chart-scroll { width: 100%; overflow-x: auto; }
+.chart-canvas { display: block; height: 320rpx; }
