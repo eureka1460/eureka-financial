@@ -242,40 +242,32 @@ class DataFetcher:
             ),
         )
 
-    # ── 利润表（单季度版）──────────────────────────────────
+    # ── 利润表（按报告期）──────────────────────────────────
     def fetch_income_statement(self, symbol: str) -> pd.DataFrame:
-        """获取利润表（单季度数据）。
+        """获取利润表（按报告期，年报为全年累计值）。
 
-        主源：东方财富 (stock_profit_sheet_by_quarterly_em) — 直接返回单季度值
-        备源：新浪财经
+        主源：东方财富 (stock_profit_sheet_by_report_em)
         """
         em_sym = _to_em_symbol(symbol)
-        sina_sym = _to_sina_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="income_statement_quarterly",
+            func_name="income_statement_report",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_profit_sheet_by_quarterly_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_financial_report_sina(
-                stock=sina_sym, symbol="利润表"
-            ),
+            primary_fn=lambda: ak.stock_profit_sheet_by_report_em(symbol=em_sym),
+            fallback_fn=lambda: ak.stock_profit_sheet_by_quarterly_em(symbol=em_sym),
         )
 
-    # ── 现金流量表（单季度版）────────────────────────────────
+    # ── 现金流量表（按报告期）────────────────────────────────
     def fetch_cash_flow(self, symbol: str) -> pd.DataFrame:
-        """获取现金流量表（单季度数据）。
+        """获取现金流量表（按报告期，年报为全年累计值）。
 
-        主源：东方财富 (stock_cash_flow_sheet_by_quarterly_em) — 直接返回单季度值
-        备源：新浪财经
+        主源：东方财富 (stock_cash_flow_sheet_by_report_em)
         """
         em_sym = _to_em_symbol(symbol)
-        sina_sym = _to_sina_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="cash_flow_quarterly",
+            func_name="cash_flow_report",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_cash_flow_sheet_by_quarterly_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_financial_report_sina(
-                stock=sina_sym, symbol="现金流量表"
-            ),
+            primary_fn=lambda: ak.stock_cash_flow_sheet_by_report_em(symbol=em_sym),
+            fallback_fn=lambda: ak.stock_cash_flow_sheet_by_quarterly_em(symbol=em_sym),
         )
 
     # ── 批量获取 ────────────────────────────────────────────
