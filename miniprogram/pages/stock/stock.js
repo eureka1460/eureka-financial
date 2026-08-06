@@ -70,6 +70,8 @@ Page({
     chartBars: [],
     chartColW: 75,
     chartMinW: 500,
+    chartDots: [],
+    chartLines: [],
     chartField: '',
     chartPeriod: 'annual',
     annualData: [],
@@ -229,8 +231,8 @@ Page({
         const prev = Number(source[i - 1][field]);
         yoy = prev !== 0 ? (v - prev) / Math.abs(prev) : null;
       }
-      // 240rpx 容器高度，减去标签空间 ~40rpx，最大柱高 180rpx
-      const barMax = 180;
+      // 290rpx 容器，减去头上48rpx标签区，最大柱高 200rpx
+      const barMax = 200;
       return {
         year: period === 'annual' ? r.fiscal_year : (r.report_date || '').substring(0, 7),
         _h: Math.max(Math.round((Math.abs(v) / max) * barMax), 4),
@@ -244,10 +246,41 @@ Page({
       };
     });
 
+    // 折线：计算连线位置
+    const yVals = bars.map(b => b._yTxt !== '' ? parseFloat(b._yTxt) : null);
+    const yAbs = yVals.filter(y => y != null).map(Math.abs);
+    const yMax = yAbs.length > 0 ? Math.max(...yAbs, 0.1) : 1;
+    const dotTop = 48; // 标签区高度
+    const lineH = 160; // 折线可用高度
+    const dots = bars.map((b, i) => {
+      const y = yVals[i];
+      if (y == null) return null;
+      // 映射：y正值在上（top小），y负值在下（top大）
+      const ratio = y / yMax;
+      const top = dotTop + lineH / 2 - (ratio * lineH / 2);
+      return { x: (i + 0.5) / bars.length * 100, y: (top / 290) * 100, val: y };
+    });
+
+    const lines = [];
+    for (let i = 0; i < dots.length - 1; i++) {
+      const a = dots[i], b = dots[i + 1];
+      if (!a || !b) continue;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+      lines.push({
+        left: a.x, top: a.y, width: len, deg: ang,
+      });
+    }
+
     // 年报一次显示5柱，季报8柱
-    const colsVis = period === 'annual' ? 5 : 8;
     const colW = period === 'annual' ? 75 : 47;
-    this.setData({ chartMetricName: name, chartBars: bars, chartField: field, chartColW: colW, chartMinW: bars.length * colW });
+    this.setData({
+      chartMetricName: name, chartBars: bars, chartField: field,
+      chartColW: colW, chartMinW: bars.length * colW,
+      chartDots: dots.filter(d => d), chartLines: lines,
+    });
   },
 
   _fmtAmount(v) {

@@ -46,6 +46,20 @@
       </view>
       <view class="ch-scroll">
         <view class="ch-body" style="min-width:{{chartMinW}}px;">
+          <!-- 折线层 -->
+          <view class="ch-line-layer">
+            <view wx:for="{{chartLines}}" wx:key="index"
+              style="position:absolute; left:{{item.left}}%; top:{{item.top}}%;
+                     width:{{item.width}}%; height:3rpx; background:#F59E0B;
+                     transform:rotate({{item.deg}}deg); transform-origin:0 0;"
+            ></view>
+            <view wx:for="{{chartDots}}" wx:key="index"
+              style="position:absolute; left:calc({{item.x}}% - 6rpx); top:calc({{item.y}}% - 6rpx);
+                     width:12rpx; height:12rpx; border-radius:50%;
+                     background:{{item.val >= 0 ? '#22C55E' : '#EF4444'}};"
+            ></view>
+          </view>
+          <!-- 柱子 -->
           <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;">
             <text class="ch-yoy {{item._yUp || ''}}{{item._yDn || ''}}{{item._yNone || ''}}">{{item._yTxt || ''}}</text>
             <view class="ch-bar-wrap">
