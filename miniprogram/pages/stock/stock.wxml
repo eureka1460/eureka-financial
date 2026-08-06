@@ -49,7 +49,7 @@
           <!-- 柱子 -->
           <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;" bindtap="onBarTap" data-idx="{{index}}">
             <view class="ch-bar-wrap">
-              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};">
+              <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#EAB308'}};">
                 <text wx:if="{{item._yTxt && item._h > 30}}" class="ch-yoy-on-bar {{item._yDn ? 'text-down' : 'text-up'}}">{{item._yTxt}}</text>
               </view>
             </view>

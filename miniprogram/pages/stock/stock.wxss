@@ -1,70 +1,36 @@
 .page { min-height: 100vh; background: var(--color-surface); padding-bottom: var(--spacing-xl); }
 
-/* 头部 */
 .header { margin-top: var(--spacing-md); }
 
-/* 表格 */
 .table-scroll { width: 100%; }
 .table { display: flex; flex-direction: column; min-width: 600rpx; }
 
 .table-row { display: flex; padding: var(--spacing-sm) 0; border-bottom: 1rpx solid var(--color-divider); align-items: center; }
 .table-row:last-child { border-bottom: none; }
 
-.col-label {
-  width: 180rpx; flex-shrink: 0;
-  display: flex; align-items: center; gap: 2rpx;
-  padding-left: 4rpx;
-}
-
-.col-val {
-  flex: 1; text-align: right; padding: 0 var(--spacing-sm);
-  min-width: 140rpx;
-}
+.col-label { width: 180rpx; flex-shrink: 0; display: flex; align-items: center; gap: 2rpx; padding-left: 4rpx; }
+.col-val { flex: 1; text-align: right; padding: 0 var(--spacing-sm); min-width: 140rpx; }
 
 .table-header { padding: var(--spacing-sm) 0; }
 .table-header .col-label { font-size: var(--font-xs); color: var(--color-text-muted); }
-.table-header .col-val {
-  font-size: var(--font-xs); color: var(--color-text-muted);
-  font-weight: normal;
-}
+.table-header .col-val { font-size: var(--font-xs); color: var(--color-text-muted); font-weight: normal; }
 
-/* 问号 */
-.help-q {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 24rpx; height: 24rpx; border-radius: 50%;
-  border: 1rpx solid var(--color-border);
-  font-size: 16rpx; color: var(--color-text-muted);
-  flex-shrink: 0; margin-left: 2rpx;
-}
+.help-q { display: inline-flex; align-items: center; justify-content: center; width: 24rpx; height: 24rpx; border-radius: 50%; border: 1rpx solid var(--color-border); font-size: 16rpx; color: var(--color-text-muted); flex-shrink: 0; margin-left: 2rpx; }
 
-/* 帮助弹窗 */
-.help-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4); z-index: 999;
-  display: flex; align-items: center; justify-content: center;
-}
-.help-box {
-  background: #fff; border-radius: var(--radius-md);
-  padding: var(--spacing-xl); margin: var(--spacing-xl);
-  max-width: 560rpx;
-}
+.help-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.help-box { background: #fff; border-radius: var(--radius-md); padding: var(--spacing-xl); margin: var(--spacing-xl); max-width: 560rpx; }
 
 /* 内联柱状图 */
 .ch-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .ch-body { display: flex; align-items: flex-end; padding: 8rpx 0 0; min-width: 500px; height: 250rpx; position: relative; }
 .ch-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 50px; }
-.ch-bar-wrap { width: 35%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
-.ch-bar { width: 100%; border-radius: 3rpx 3rpx 0 0; min-height: 4rpx; display:flex; align-items:center; justify-content:center; }
-.ch-yoy-on-bar { font-size:18rpx; font-weight:700; text-shadow:0 0 4rpx #fff; }
+.ch-bar-wrap { width: 35%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
+.ch-bar { width: 100%; border-radius: 3rpx 3rpx 0 0; min-height: 4rpx; display: flex; align-items: center; justify-content: center; }
 .ch-bar-red { border-radius: 0 0 3rpx 3rpx; }
+.ch-yoy-on-bar { font-size: 18rpx; font-weight: 700; text-shadow: 0 0 4rpx #fff; }
 .ch-yr { font-size: 20rpx; color: var(--color-text-muted); margin-top: 2rpx; }
 
-.tag-pill { font-size:22rpx; padding:2rpx 12rpx; border-radius:999rpx; border:1rpx solid var(--color-border); color:var(--color-text-secondary); }
-.pill-on { background:var(--color-accent); color:#fff; border-color:var(--color-accent); }
+.tag-pill { font-size: 22rpx; padding: 2rpx 12rpx; border-radius: 999rpx; border: 1rpx solid var(--color-border); color: var(--color-text-secondary); }
+.pill-on { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
 
-.ch-tip {
-  position: absolute; top: 10rpx; transform: translateX(-50%);
-  background: rgba(0,0,0,0.85); color: #fff; font-size: 22rpx;
-  padding: 8rpx 20rpx; border-radius: 8rpx; white-space: nowrap;
-  z-index: 10; pointer-events: none;
-}
+.ch-tip { position: absolute; top: 10rpx; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; font-size: 22rpx; padding: 10rpx 20rpx; border-radius: 8rpx; white-space: pre-line; z-index: 10; pointer-events: none; line-height: 1.5; }
