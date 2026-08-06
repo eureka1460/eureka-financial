@@ -314,15 +314,15 @@ class DataLoader:
             "fiscal_year": s.fiscal_year,
         }
 
-        # 年报直接取 Q4 数据（_by_quarterly_em 中 Q4 报表即为全年值）
-        rev = self._f(s.operating_revenue) or 0
-        cost = self._f(s.operating_cost) or 0
-        op_profit = self._f(s.operating_profit) or 0
-        total_profit = self._f(s.total_profit) or 0
-        net_p = self._f(s.net_profit) or 0
-        net_p_attr = self._f(s.net_profit_attr_parent) or 0
-        ocf = self._f(s.net_operating_cashflow) or 0
-        capex = self._f(s.capital_expenditure) or 0
+        # 全年汇总值（四个季度之和才是全年）
+        rev = annual["operating_revenue"] or 0
+        cost = annual["operating_cost"] or 0
+        op_profit = annual["operating_profit"] or 0
+        total_profit = annual["total_profit"] or 0
+        net_p = annual["net_profit"] or 0
+        net_p_attr = annual["net_profit_attr_parent"] or 0
+        ocf = annual["net_operating_cashflow"] or 0
+        capex = annual["capital_expenditure"] or 0
 
         # ── 盈利能力 ──
         if net_p_attr != 0 and s.total_equity:
