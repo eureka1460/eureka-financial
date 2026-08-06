@@ -268,174 +268,28 @@ class DataLoader:
                 logger.error(f"{symbol} {date_str} 指标入库失败: {e}")
 
         self.db.commit()
+        # FCF 自己算：经营现金流 - 资本支出
+        try:
+            stmt = (
+                self.db.query(FinancialStatement)
+                .filter(FinancialStatement.symbol == symbol)
+                .order_by(FinancialStatement.report_date.desc())
+                .first()
+            )
+            if stmt and stmt.net_operating_cashflow is not None:
+                ocf = float(stmt.net_operating_cashflow)
+                capex = float(stmt.capital_expenditure or 0)
+                ind = {
+                    'symbol': symbol, 'report_date': stmt.report_date,
+                    'report_type': stmt.report_type, 'fiscal_year': stmt.fiscal_year,
+                    'fcf': ocf - capex,
+                }
+                self._upsert_indicator(ind)
+        except Exception as e:
+            logger.error(f"{symbol} FCF 计算失败: {e}")
+
         logger.info(f"{symbol}: 同花顺指标入库 {count} 条")
         return count
-
-    def _build_annual_from_quarters(
-        self, annual_stmt: FinancialStatement, quarters: list
-    ) -> dict:
-        """用四个季度之和构建全年利润表和现金流数据。
-
-        Returns:
-            包含 annualized 数据的 dict，用于指标计算。
-        """
-        result = {
-            "stmt": annual_stmt,
-            "operating_revenue": 0.0,
-            "operating_cost": 0.0,
-            "operating_profit": 0.0,
-            "total_profit": 0.0,
-            "net_profit": 0.0,
-            "net_profit_attr_parent": 0.0,
-            "net_profit_excl_nonrecurring": 0.0,
-            "net_operating_cashflow": 0.0,
-            "net_investing_cashflow": 0.0,
-            "net_financing_cashflow": 0.0,
-            "capital_expenditure": 0.0,
-            "dividends_paid": 0.0,
-        }
-
-        for q in quarters:
-            result["operating_revenue"] += self._f(q.operating_revenue) or 0
-            result["operating_cost"] += self._f(q.operating_cost) or 0
-            result["operating_profit"] += self._f(q.operating_profit) or 0
-            result["total_profit"] += self._f(q.total_profit) or 0
-            result["net_profit"] += self._f(q.net_profit) or 0
-            result["net_profit_attr_parent"] += self._f(q.net_profit_attr_parent) or 0
-            result["net_profit_excl_nonrecurring"] += self._f(q.net_profit_excl_nonrecurring) or 0
-            result["net_operating_cashflow"] += self._f(q.net_operating_cashflow) or 0
-            result["net_investing_cashflow"] += self._f(q.net_investing_cashflow) or 0
-            result["net_financing_cashflow"] += self._f(q.net_financing_cashflow) or 0
-            result["capital_expenditure"] += self._f(q.capital_expenditure) or 0
-            result["dividends_paid"] += self._f(q.dividends_paid) or 0
-
-        return result
-
-    @staticmethod
-    def _f(val):
-        """将 Decimal 安全转换为 float，None 返回 None。"""
-        if val is None:
-            return None
-        return float(val)
-
-    def _compute_annual_indicators(
-        self,
-        annual: dict,
-        quarters: list,
-        prev_annual_stmt,
-        prev_annual_data: dict = None,
-    ) -> Optional[dict]:
-        """用全年汇总数据计算年度衍生指标。
-
-        Args:
-            annual: _build_annual_from_quarters 返回的年度汇总 dict
-            quarters: 该财年所有季度报表列表
-            prev_annual_stmt: 上年年报的 FinancialStatement ORM 对象
-            prev_annual_data: 上年年度汇总 dict（用于 P&L / 现金流 YoY）
-        """
-        s = annual["stmt"]  # 年报 FinancialStatement
-
-        ind = {
-            "symbol": s.symbol,
-            "report_date": s.report_date,
-            "report_type": "annual",
-            "fiscal_year": s.fiscal_year,
-        }
-
-        # _by_report_em 中 Q4 年报即为全年累计值，直接使用
-        rev = self._f(s.operating_revenue) or 0
-        cost = self._f(s.operating_cost) or 0
-        op_profit = self._f(s.operating_profit) or 0
-        total_profit = self._f(s.total_profit) or 0
-        net_p = self._f(s.net_profit) or 0
-        net_p_attr = self._f(s.net_profit_attr_parent) or 0
-        ocf = self._f(s.net_operating_cashflow) or 0
-        capex = self._f(s.capital_expenditure) or 0
-
-        # ── 盈利能力 ──
-        if net_p_attr != 0 and s.total_equity:
-            e1 = self._f(s.total_equity)
-            e0 = self._f(prev_annual_stmt.total_equity) if prev_annual_stmt and prev_annual_stmt.total_equity else None
-            avg_equity = (e1 + e0) / 2 if e0 else e1
-            if avg_equity > 0:
-                ind["roe"] = net_p_attr / avg_equity
-
-        if net_p != 0 and s.total_assets:
-            a1 = self._f(s.total_assets)
-            a0 = self._f(prev_annual_stmt.total_assets) if prev_annual_stmt and prev_annual_stmt.total_assets else None
-            avg_assets = (a1 + a0) / 2 if a0 else a1
-            if avg_assets > 0:
-                ind["roa"] = net_p / avg_assets
-
-        if rev > 0:
-            ind["gross_margin"] = (rev - cost) / rev
-            ind["net_margin"] = net_p_attr / rev
-            if op_profit != 0:
-                ind["operating_margin"] = op_profit / rev
-
-        # ── 成长能力 ──（直接从上年 ORM 取全年值，_by_report_em 中 Q4 = 全年）
-        if prev_annual_stmt:
-            prev_rev = self._f(prev_annual_stmt.operating_revenue) or 0
-            prev_profit = self._f(prev_annual_stmt.net_profit_attr_parent) or 0
-            prev_op = self._f(prev_annual_stmt.operating_profit) or 0
-
-            if prev_rev > 0 and rev > 0:
-                ind["revenue_yoy"] = (rev - prev_rev) / prev_rev
-            if prev_profit > 0 and net_p_attr > 0:
-                ind["net_profit_yoy"] = (net_p_attr - prev_profit) / prev_profit
-            if prev_op > 0 and op_profit > 0:
-                ind["operating_profit_yoy"] = (op_profit - prev_op) / prev_op
-
-        # ── 偿债与流动性（用年报时点数据）──
-        if s.current_assets and s.current_liabilities and s.current_liabilities > 0:
-            ind["current_ratio"] = self._f(s.current_assets) / self._f(s.current_liabilities)
-
-        # 速动比率 = (货币资金 + 交易性金融资产 + 应收票据 + 应收账款 + 其他应收款) / 流动负债
-        if s.current_liabilities and s.current_liabilities > 0:
-            quick_num = (
-                (self._f(s.cash_and_equivalents) or 0)
-                + (self._f(s.trading_financial_assets) or 0)
-                + (self._f(s.notes_receivable) or 0)
-                + (self._f(s.accounts_receivable) or 0)
-                + (self._f(s.other_receivables) or 0)
-            )
-            ind["quick_ratio"] = quick_num / self._f(s.current_liabilities)
-
-        if s.total_liabilities and s.total_assets and s.total_assets > 0:
-            ind["debt_to_assets"] = self._f(s.total_liabilities) / self._f(s.total_assets)
-
-        if s.total_liabilities and s.total_equity and s.total_equity > 0:
-            ind["debt_to_equity"] = self._f(s.total_liabilities) / self._f(s.total_equity)
-
-        ie = self._f(s.interest_expense)
-        if ie and ie != 0 and op_profit != 0:
-            ind["interest_coverage"] = op_profit / abs(ie)
-
-        # ── 营运效率 ──
-        if rev > 0 and s.total_assets and s.total_assets > 0:
-            a1 = self._f(s.total_assets)
-            a0 = self._f(prev_annual_stmt.total_assets) if prev_annual_stmt and prev_annual_stmt.total_assets else None
-            avg_assets = (a1 + a0) / 2 if a0 else a1
-            ind["asset_turnover"] = rev / avg_assets
-
-        # ── 估值相关 ──
-        ind["fcf"] = ocf - capex
-
-        if s.total_equity:
-            stock = self.db.query(Stock).filter(Stock.symbol == s.symbol).first()
-            if stock and stock.total_shares and stock.total_shares > 0:
-                ind["book_value_per_share"] = self._f(s.total_equity) / self._f(stock.total_shares)
-                # 每股股利 = 全年股利支出 / 总股本
-                total_div = annual.get("dividends_paid", 0) or 0
-                if total_div > 0:
-                    ind["dividend_per_share"] = total_div / self._f(stock.total_shares)
-
-        # ── 单季度值清空（年报不需要） ──
-        ind["revenue_single_q"] = None
-        ind["net_profit_single_q"] = None
-        ind["operating_cashflow_single_q"] = None
-
-        return ind if len(ind) > 5 else None
 
     def _upsert_indicator(self, ind: dict):
         """插入或更新一条计算指标记录。"""
