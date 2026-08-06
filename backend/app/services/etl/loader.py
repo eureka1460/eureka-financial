@@ -51,16 +51,22 @@ class DataLoader:
 
     def _upsert(self, model, values: dict, unique_cols: list):
         """通用 upsert，兼容 SQLite 和 MySQL。"""
+        import math
+        # 过滤 NaN 值（MySQL 不接受）
+        clean_values = {
+            k: (None if isinstance(v, float) and math.isnan(v) else v)
+            for k, v in values.items()
+        }
         is_mysql = "mysql" in str(self.db.bind.url)
         if is_mysql:
-            stmt = mysql_insert(model).values(**values)
-            update_cols = {k: stmt.inserted[k] for k in values if k not in ("id", "created_at")}
+            stmt = mysql_insert(model).values(**clean_values)
+            update_cols = {k: stmt.inserted[k] for k in clean_values if k not in ("id", "created_at")}
             stmt = stmt.on_duplicate_key_update(**update_cols)
         else:
-            stmt = sqlite_insert(model).values(**values)
+            stmt = sqlite_insert(model).values(**clean_values)
             stmt = stmt.on_conflict_do_update(
                 index_elements=unique_cols,
-                set_={k: stmt.excluded[k] for k in values if k not in ("id", "created_at")},
+                set_={k: stmt.excluded[k] for k in clean_values if k not in ("id", "created_at")},
             )
         self.db.execute(stmt)
 
