@@ -45,8 +45,8 @@
         </view>
       </view>
       <view class="ch-scroll">
-        <view class="ch-body">
-          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year">
+        <view class="ch-body" style="min-width:{{chartMinW}}px;">
+          <view class="ch-col" wx:for="{{chartBars}}" wx:key="year" style="min-width:{{chartColW}}px;">
             <text class="ch-yoy {{item._yUp || ''}}{{item._yDn || ''}}{{item._yNone || ''}}">{{item._yTxt || ''}}</text>
             <view class="ch-bar-wrap">
               <view class="ch-bar {{item._neg ? 'ch-bar-red' : ''}}" style="height:{{item._h}}rpx; background:{{item._neg ? '#EF4444' : '#3B82F6'}};"></view>

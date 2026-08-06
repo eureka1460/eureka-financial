@@ -68,6 +68,8 @@ Page({
     chartMetricName: '',
     chartMetricData: [],
     chartBars: [],
+    chartColW: 75,
+    chartMinW: 500,
     chartField: '',
     chartPeriod: 'annual',
     annualData: [],
@@ -242,7 +244,10 @@ Page({
       };
     });
 
-    this.setData({ chartMetricName: name, chartBars: bars, chartField: field });
+    // 年报一次显示5柱，季报8柱
+    const colsVis = period === 'annual' ? 5 : 8;
+    const colW = period === 'annual' ? 75 : 47;
+    this.setData({ chartMetricName: name, chartBars: bars, chartField: field, chartColW: colW, chartMinW: bars.length * colW });
   },
 
   _fmtAmount(v) {
