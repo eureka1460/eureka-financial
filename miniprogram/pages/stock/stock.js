@@ -84,36 +84,27 @@ Page({
   },
 
   // ── 加载全部数据 ──────────────────────
-  async loadAll() {
+  loadAll() {
     this.setData({ loading: true });
-    try {
-      const [detailRes, finRes] = await Promise.all([
-        api.getStockDetail(this.data.symbol),
-        api.getFinancials(this.data.symbol, { years: 3 }),
-      ]);
-
+    const that = this;
+    api.getStockDetail(this.data.symbol).then(detailRes => {
       const stock = detailRes.data;
-      const allData = finRes.data || [];
-
-      // 头部
-      const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
-      this.setData({
-        stock,
-        marketLabel: mktMap[stock.market] || stock.market || '',
-      });
-
-      // 构建对比表
-      this.buildTable(allData);
-
-      // 图表数据缓存
-      const annuals = allData.filter(r => r.report_type === 'annual').reverse();
-      const quarterlys = allData.filter(r => r.report_type !== 'annual').reverse();
-      this.setData({ annualData: annuals, quarterlyData: quarterlys });
-      this.buildCharts(allData);
-    } catch (e) {
-      this.setData({ error: e.message || '加载失败' });
-    }
-    this.setData({ loading: false });
+      api.getFinancials(this.data.symbol, { years: 3 }).then(finRes => {
+        const allData = finRes.data || [];
+        const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
+        const annuals = allData.filter(r => r.report_type === 'annual').reverse();
+        const quarterlys = allData.filter(r => r.report_type !== 'annual').reverse();
+        that.setData({
+          stock,
+          marketLabel: mktMap[stock.market] || stock.market || '',
+          annualData: annuals,
+          quarterlyData: quarterlys,
+          loading: false,
+        });
+        that.buildTable(allData);
+        that.buildCharts(allData);
+      }).catch(e => that.setData({ error: e.message || '加载失败', loading: false }));
+    }).catch(e => that.setData({ error: e.message || '加载失败', loading: false }));
   },
 
   // ── 构建多期对比表 ──────────────────
