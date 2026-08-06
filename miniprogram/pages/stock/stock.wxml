@@ -52,11 +52,16 @@
 
     <!-- 点击指标后弹出的图表 -->
     <view wx:if="{{chartMetricName}}" class="card">
-      <view class="flex justify-between items-center" style="margin-bottom:16rpx">
-        <text class="text-md font-bold">{{chartMetricName}} 历年趋势</text>
+      <view class="flex justify-between items-center" style="margin-bottom:12rpx">
+        <text class="text-md font-bold">{{chartMetricName}}</text>
         <text class="text-sm text-accent" bindtap="onHideMetricChart">关闭 ✕</text>
       </view>
-      <history-chart title="{{chartMetricName}}" data="{{chartMetricData}}" color="#F59E0B" />
+      <!-- 年报/季报切换 -->
+      <view class="flex gap-sm" style="margin-bottom:16rpx">
+        <view class="tag {{chartPeriod === 'annual' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">年报</view>
+        <view class="tag {{chartPeriod === 'quarterly' ? 'tag-accent' : 'tag-neutral'}}" bindtap="onToggleChartPeriod">季报</view>
+      </view>
+      <history-chart title="" data="{{chartMetricData}}" color="#F59E0B" />
     </view>
 
     <!-- 帮助弹窗 -->

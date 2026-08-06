@@ -67,6 +67,10 @@ Page({
     // 点击指标图表
     chartMetricName: '',
     chartMetricData: [],
+    chartField: '',
+    chartPeriod: 'annual',
+    annualData: [],
+    quarterlyData: [],
 
     // 帮助
     helpName: '',
@@ -101,7 +105,10 @@ Page({
       // 构建对比表
       this.buildTable(allData);
 
-      // 图表数据
+      // 图表数据缓存
+      const annuals = allData.filter(r => r.report_type === 'annual').reverse();
+      const quarterlys = allData.filter(r => r.report_type !== 'annual').reverse();
+      this.setData({ annualData: annuals, quarterlyData: quarterlys });
       this.buildCharts(allData);
     } catch (e) {
       this.setData({ error: e.message || '加载失败' });
@@ -183,19 +190,31 @@ Page({
   onTapMetric(e) {
     const field = e.currentTarget.dataset.field;
     const name = e.currentTarget.dataset.name;
-    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 }).then((res) => {
-      const items = (res.data || []).reverse();
-      const data = items.map((r, i) => {
-        const val = r[field] != null ? Number(r[field]) : 0;
-        let yoy = null;
-        if (i > 0 && items[i - 1][field] != null && items[i - 1][field] !== 0) {
-          const prev = Number(items[i - 1][field]);
-          yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
-        }
-        return { year: r.fiscal_year, value: val, yoy };
-      });
-      this.setData({ chartMetricName: name, chartMetricData: data });
+    this.showChart(field, name, this.data.chartPeriod);
+  },
+
+  onToggleChartPeriod() {
+    const next = this.data.chartPeriod === 'annual' ? 'quarterly' : 'annual';
+    this.setData({ chartPeriod: next });
+    const m = this.data.rows.find(r => r.field === this.data.chartField);
+    if (m) this.showChart(m.field, m.name, next);
+  },
+
+  showChart(field, name, period) {
+    const source = period === 'annual' ? this.data.annualData : this.data.quarterlyData;
+    const data = source.map((r, i) => {
+      const val = r[field] != null ? Number(r[field]) : 0;
+      let yoy = null;
+      if (period === 'annual' && i > 0 && source[i - 1][field] != null && source[i - 1][field] !== 0) {
+        const prev = Number(source[i - 1][field]);
+        yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
+      }
+      const label = period === 'annual'
+        ? r.fiscal_year
+        : (r.report_date || '').substring(0, 7);
+      return { year: label, value: val, yoy };
     });
+    this.setData({ chartMetricName: name, chartMetricData: data, chartField: field });
   },
 
   onHideMetricChart() {
