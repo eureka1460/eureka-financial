@@ -268,7 +268,9 @@ class DataLoader:
                 logger.error(f"{symbol} {date_str} 指标入库失败: {e}")
 
         self.db.commit()
-        # FCF 自己算：经营现金流 - 资本支出
+        # FCF = 经营活动现金流净额 - 投资活动现金流出
+        #      = net_operating_cashflow + net_investing_cashflow
+        #        (投资活动净额通常为负，加上即等于减去流出)
         try:
             stmt = (
                 self.db.query(FinancialStatement)
@@ -278,11 +280,11 @@ class DataLoader:
             )
             if stmt and stmt.net_operating_cashflow is not None:
                 ocf = float(stmt.net_operating_cashflow)
-                capex = float(stmt.capital_expenditure or 0)
+                invest_out = float(stmt.net_investing_cashflow or 0)
                 ind = {
                     'symbol': symbol, 'report_date': stmt.report_date,
                     'report_type': stmt.report_type, 'fiscal_year': stmt.fiscal_year,
-                    'fcf': ocf - capex,
+                    'fcf': ocf + invest_out,
                 }
                 self._upsert_indicator(ind)
         except Exception as e:
