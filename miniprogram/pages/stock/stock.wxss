@@ -1,66 +1,50 @@
-.page {
-  min-height: 100vh;
-  background: var(--color-surface);
-  padding-bottom: var(--spacing-xl);
+.page { min-height: 100vh; background: var(--color-surface); padding-bottom: var(--spacing-xl); }
+
+/* 头部 */
+.header { margin-top: var(--spacing-md); }
+
+/* 表格 */
+.table-scroll { width: 100%; }
+.table { display: flex; flex-direction: column; min-width: 600rpx; }
+
+.table-row { display: flex; padding: var(--spacing-sm) 0; border-bottom: 1rpx solid var(--color-divider); align-items: center; }
+.table-row:last-child { border-bottom: none; }
+
+.col-label {
+  width: 180rpx; flex-shrink: 0;
+  display: flex; align-items: center; gap: 2rpx;
+  padding-left: 4rpx;
 }
 
-/* ── 股票头部 ─────────────────────────── */
-.stock-header {
-  margin-top: var(--spacing-md);
-}
-.header-top {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6rpx;
-}
-.header-meta {
-  display: flex;
-  margin-bottom: 20rpx;
-}
-.header-actions {
-  display: flex;
+.col-val {
+  flex: 1; text-align: right; padding: 0 var(--spacing-sm);
+  min-width: 140rpx;
 }
 
-/* ── 成长能力 ─────────────────────────── */
-.growth-item {
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-md);
-  text-align: center;
-}
-.growth-item .text-xs {
-  display: block;
-  margin-bottom: 4rpx;
+.table-header { padding: var(--spacing-sm) 0; }
+.table-header .col-label { font-size: var(--font-xs); color: var(--color-text-muted); }
+.table-header .col-val {
+  font-size: var(--font-xs); color: var(--color-text-muted);
+  font-weight: normal;
 }
 
-/* ── 快照网格 ───────────────────────── */
-.snapshot-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-.snap-item {
-  width: calc(50% - var(--spacing-md) / 2);
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-md);
-}
-.snap-item .text-xs {
-  display: block;
-  margin-bottom: 4rpx;
+/* 问号 */
+.help-q {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24rpx; height: 24rpx; border-radius: 50%;
+  border: 1rpx solid var(--color-border);
+  font-size: 16rpx; color: var(--color-text-muted);
+  flex-shrink: 0; margin-left: 2rpx;
 }
 
-/* ── 财务历史 ───────────────────────── */
-.history-item {
-  padding: var(--spacing-md) 0;
-  border-bottom: 1rpx solid var(--color-divider);
+/* 帮助弹窗 */
+.help-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); z-index: 999;
+  display: flex; align-items: center; justify-content: center;
 }
-.history-item:last-child {
-  border-bottom: none;
-}
-.history-metric {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 100rpx;
+.help-box {
+  background: #fff; border-radius: var(--radius-md);
+  padding: var(--spacing-xl); margin: var(--spacing-xl);
+  max-width: 560rpx;
 }

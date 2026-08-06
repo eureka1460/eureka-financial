@@ -1,208 +1,215 @@
 /**
- * 股票详情页：基本信息 + 财务指标 + 历史报表
+ * 股票详情页 — 多期数据对比表 + 指标图表
  */
 const api = require('../../utils/api');
-const { fmtPercent, fmtAmount, fmtDate, fmtReportType } = require('../../utils/format');
+const { fmtPercent, fmtAmount } = require('../../utils/format');
+
+// 指标定义
+const METRICS = [
+  { field: 'operating_revenue', name: '营业总收入', unit: '元', isAmount: true },
+  { field: 'net_profit_attr_parent', name: '归母净利润', unit: '元', isAmount: true },
+  { field: 'roe', name: 'ROE', unit: '%', isRatio: true },
+  { field: 'roa', name: 'ROA', unit: '%', isRatio: true },
+  { field: 'gross_margin', name: '毛利率', unit: '%', isRatio: true },
+  { field: 'net_margin', name: '净利率', unit: '%', isRatio: true },
+  { field: 'operating_margin', name: '营业利润率', unit: '%', isRatio: true },
+  { field: 'revenue_yoy', name: '营收同比增长', unit: '%', isRatio: true },
+  { field: 'net_profit_yoy', name: '净利同比增长', unit: '%', isRatio: true },
+  { field: 'current_ratio', name: '流动比率', unit: '倍', isRatio: true },
+  { field: 'quick_ratio', name: '速动比率', unit: '倍', isRatio: true },
+  { field: 'debt_to_assets', name: '资产负债率', unit: '%', isRatio: true },
+  { field: 'fcf', name: '自由现金流', unit: '元', isAmount: true },
+  { field: 'book_value_per_share', name: '每股净资产', unit: '元', isRatio: true },
+  { field: 'basic_eps', name: '基本每股收益', unit: '元', isRatio: true },
+  { field: 'total_assets', name: '总资产', unit: '元', isAmount: true },
+  { field: 'total_equity', name: '净资产', unit: '元', isAmount: true },
+];
+
+// 帮助文本
+const HELP = {
+  'ROE': '净利润 / 平均净资产。15%以上为优秀。',
+  'ROA': '净利润 / 平均总资产。越高越好。',
+  '毛利率': '（营收 − 营业成本）/ 营收。反映产品竞争力。',
+  '净利率': '归母净利润 / 营收。',
+  '营业利润率': '营业利润 / 营收。只看主业。',
+  '营收同比增长': '（本期 − 上年同期）/ 上年同期。',
+  '净利同比增长': '（本期净利 − 上年同期）/ 上年同期。',
+  '流动比率': '流动资产 / 流动负债。>2 安全。',
+  '速动比率': '（现金+交易性金融资产+应收款）/ 流动负债。',
+  '资产负债率': '总负债 / 总资产。40-60% 适中。',
+  '自由现金流': '经营现金流 − 资本支出。可自由支配的钱。',
+  '每股净资产': '股东权益 / 总股本。账面价值。',
+  '基本每股收益': '归母净利润 / 总股本。每股赚多少。',
+  '营业总收入': '主营业务收入+其他业务收入。顶行收入。',
+  '归母净利润': '归属母公司股东的净利润。',
+  '总资产': '公司拥有的全部资源。',
+  '净资产': '总资产 − 总负债。股东权益。',
+};
 
 Page({
   data: {
     symbol: '',
     stock: null,
-    financial: null,
     loading: true,
     error: '',
-    revenueYoYClass: '',
-    profitYoYClass: '',
 
-    // 财务历史
-    history: [],
-    historyReportType: '',
-    historyYears: 5,
-    historyLoading: false,
-    historyError: '',
+    // 头部
+    marketLabel: '',
 
-    // 图表数据
-    chartRevenue: [],
-    chartProfit: [],
-    chartROE: [],
+    // 对比表
+    periods: [],
+    rows: [],
+
+    // 图表
     showCharts: false,
+    chartRevenue: [], chartProfit: [], chartROE: [],
 
-    // 点击指标弹出图表
+    // 点击指标图表
     chartMetricName: '',
     chartMetricData: [],
 
-    // 指标展示
-    roe: '--',
-    roa: '--',
-    grossMargin: '--',
-    netMargin: '--',
-    operatingMargin: '--',
-    revenueYoY: '--',
-    profitYoY: '--',
-    currentRatio: '--',
-    quickRatio: '--',
-    debtToAssets: '--',
-    fcf: '--',
-    bookValuePerShare: '--',
-    totalAssets: '--',
-    totalEquity: '--',
-    operatingRevenue: '--',
-    netProfit: '--',
+    // 帮助
+    helpName: '',
+    helpText: '',
   },
 
   onLoad(options) {
     const symbol = options.symbol || '';
     this.setData({ symbol });
-    if (symbol) {
-      this.loadDetail();
-      this.loadHistory();
-      this.loadChartData();
-    }
+    if (symbol) this.loadAll();
   },
 
-  // ── 股票详情 ──────────────────────────
-  loadDetail() {
+  // ── 加载全部数据 ──────────────────────
+  async loadAll() {
     this.setData({ loading: true });
-    api.getStockDetail(this.data.symbol)
-      .then((res) => {
-        const stock = res.data;
-        const fin = stock.latest_financial || {};
+    try {
+      const [detailRes, finRes] = await Promise.all([
+        api.getStockDetail(this.data.symbol),
+        api.getFinancials(this.data.symbol, { years: 3 }),
+      ]);
 
-        const navTitle = stock.name ? `${stock.name} (${stock.symbol})` : stock.symbol;
-        wx.setNavigationBarTitle({ title: navTitle });
+      const stock = detailRes.data;
+      const allData = finRes.data || [];
 
-        this.setData({
-          stock,
-          financial: fin,
-          loading: false,
-          roe: fmtPercent(fin.roe),
-          roa: fmtPercent(fin.roa),
-          grossMargin: fmtPercent(fin.gross_margin),
-          netMargin: fmtPercent(fin.net_margin),
-          operatingMargin: fmtPercent(fin.operating_margin),
-          revenueYoY: fmtPercent(fin.revenue_yoy),
-          profitYoY: fmtPercent(fin.net_profit_yoy),
-          revenueYoYClass: fin.revenue_yoy != null ? (fin.revenue_yoy >= 0 ? 'text-up' : 'text-down') : '',
-          profitYoYClass: fin.net_profit_yoy != null ? (fin.net_profit_yoy >= 0 ? 'text-up' : 'text-down') : '',
-          currentRatio: fmtPercent(fin.current_ratio),
-          quickRatio: fmtPercent(fin.quick_ratio),
-          debtToAssets: fmtPercent(fin.debt_to_assets),
-          fcf: fmtAmount(fin.fcf),
-          bookValuePerShare: fin.book_value_per_share != null ? Number(fin.book_value_per_share).toFixed(2) + '元' : '--',
-          totalAssets: fmtAmount(fin.total_assets),
-          totalEquity: fmtAmount(fin.total_equity),
-          operatingRevenue: fmtAmount(fin.operating_revenue),
-          netProfit: fmtAmount(fin.net_profit_attr_parent),
-        });
-      })
-      .catch((err) => {
-        this.setData({ loading: false, error: err.message || '加载失败' });
+      // 头部
+      const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
+      this.setData({
+        stock,
+        marketLabel: mktMap[stock.market] || stock.market || '',
       });
+
+      // 构建对比表
+      this.buildTable(allData);
+
+      // 图表数据
+      this.buildCharts(allData);
+    } catch (e) {
+      this.setData({ error: e.message || '加载失败' });
+    }
+    this.setData({ loading: false });
   },
 
-  // ── 财务历史 ──────────────────────────
-  loadHistory() {
-    this.setData({ historyLoading: true });
-    const params = { years: this.data.historyYears };
-    if (this.data.historyReportType) {
-      params.report_type = this.data.historyReportType;
+  // ── 构建多期对比表 ──────────────────
+  buildTable(allData) {
+    // 取最近 4 条不同时期的数据
+    const periods = [];
+    const seen = new Set();
+    for (const r of allData) {
+      const key = r.report_date + '_' + r.report_type;
+      if (!seen.has(key) && periods.length < 4) {
+        seen.add(key);
+        const typeMap = { annual: '年报', q1: '一季报', semi_annual: '中报', q3: '三季报' };
+        periods.push({
+          key,
+          date: r.report_date,
+          type: r.report_type,
+          fy: r.fiscal_year,
+          label: r.fiscal_year + typeMap[r.report_type] || r.report_type,
+          data: r,
+        });
+      }
     }
 
-    api.getFinancials(this.data.symbol, params)
-      .then((res) => {
-        const items = (res.data || []).map((item) => ({
-          ...item,
-          _date: fmtDate(item.report_date),
-          _type: fmtReportType(item.report_type),
-          _revenue: fmtAmount(item.operating_revenue),
-          _profit: fmtAmount(item.net_profit_attr_parent),
-          _eps: item.basic_eps ? Number(item.basic_eps).toFixed(2) : '--',
-          _roe: fmtPercent(item.roe),
-          _margin: fmtPercent(item.gross_margin),
-        }));
-        this.setData({ history: items, historyLoading: false });
-      })
-      .catch((err) => {
-        this.setData({ historyLoading: false, historyError: '加载历史数据失败' });
-        console.error('加载财务历史失败:', err);
+    // 构建每行指标
+    const rows = METRICS.map((m) => {
+      const vals = periods.map((p) => {
+        const v = p.data[m.field];
+        let text = '--';
+        let cls = '';
+        if (v != null) {
+          if (m.isAmount) {
+            text = fmtAmount(v);
+          } else if (m.isRatio && m.unit === '%') {
+            text = fmtPercent(v);
+          } else {
+            text = Number(v).toFixed(2);
+          }
+          // 同比类着色
+          if (m.field.includes('yoy') && v !== null) {
+            cls = v >= 0 ? 'text-up' : 'text-down';
+          }
+        }
+        return { text, cls };
       });
-  },
-
-  onHistoryTypeChange(e) {
-    const type = e.currentTarget.dataset.type;
-    this.setData({ historyReportType: type });
-    this.loadHistory();
-  },
-
-  // ── 跳转 ──────────────────────────────
-  goValuation() {
-    wx.navigateTo({
-      url: `/pages/valuation/valuation?symbol=${this.data.symbol}`,
+      return { ...m, vals };
     });
+
+    this.setData({ periods, rows });
   },
 
-  goScreener() {
-    wx.switchTab({ url: '/pages/screener/screener' });
-  },
-
-  // ── 图表数据 ──────────────────────────
-  loadChartData() {
-    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
-      .then((res) => {
-        const items = (res.data || []).reverse(); // 按年份升序
-        this.setData({
-          chartRevenue: items.map((r) => ({ year: r.fiscal_year, value: r.operating_revenue, yoy: r.revenue_yoy, label: '营收' })),
-          chartProfit: items.map((r) => ({ year: r.fiscal_year, value: r.net_profit_attr_parent, yoy: r.net_profit_yoy, label: '利润' })),
-          chartROE: items.map((r) => ({ year: r.fiscal_year, value: r.roe, yoy: null, label: 'ROE' })),
-        });
-      })
-      .catch(() => {});
+  // ── 图表数据 ────────────────────────
+  buildCharts(allData) {
+    const annuals = allData.filter((r) => r.report_type === 'annual').reverse();
+    this.setData({
+      chartRevenue: annuals.map((r) => ({
+        year: r.fiscal_year, value: r.operating_revenue,
+        yoy: r.revenue_yoy,
+      })),
+      chartProfit: annuals.map((r) => ({
+        year: r.fiscal_year, value: r.net_profit_attr_parent,
+        yoy: r.net_profit_yoy,
+      })),
+      chartROE: annuals.map((r) => ({
+        year: r.fiscal_year, value: r.roe, yoy: null,
+      })),
+    });
   },
 
   onToggleCharts() {
     this.setData({ showCharts: !this.data.showCharts });
   },
 
-  // 点击指标查看历年图表
+  // ── 点击指标 → 图表 ─────────────────
   onTapMetric(e) {
-    // 兼容两种事件来源：组件 tapmetric 事件 (e.detail) 和普通 bindtap (e.currentTarget.dataset)
-    const field = e.detail?.field || e.currentTarget.dataset.field;
-    const name = e.detail?.name || e.currentTarget.dataset.name;
-    if (!field) return;
-
-    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 })
-      .then((res) => {
-        const items = (res.data || []).reverse();
-        // 先用后端返回的 YoY 字段，没有则从前一年值算同比
-        const yoyMap = {
-          operating_revenue: 'revenue_yoy',
-          net_profit_attr_parent: 'net_profit_yoy',
-          operating_profit: 'operating_profit_yoy',
-        };
-        const yoyField = yoyMap[field] || null;
-        const data = items.map((r, i) => {
-          const val = r[field] != null ? Number(r[field]) : 0;
-          let yoy = null;
-          if (yoyField && r[yoyField] != null) {
-            yoy = Number(r[yoyField]);
-          } else if (i > 0 && items[i - 1][field] != null && items[i - 1][field] !== 0) {
-            const prev = Number(items[i - 1][field]);
-            yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
-          }
-          return { year: r.fiscal_year, value: val, yoy, label: name };
-        });
-        this.setData({ chartMetricName: name, chartMetricData: data });
-      })
-      .catch(() => {});
+    const field = e.currentTarget.dataset.field;
+    const name = e.currentTarget.dataset.name;
+    api.getFinancials(this.data.symbol, { report_type: 'annual', years: 5 }).then((res) => {
+      const items = (res.data || []).reverse();
+      const data = items.map((r, i) => {
+        const val = r[field] != null ? Number(r[field]) : 0;
+        let yoy = null;
+        if (i > 0 && items[i - 1][field] != null && items[i - 1][field] !== 0) {
+          const prev = Number(items[i - 1][field]);
+          yoy = prev !== 0 ? (val - prev) / Math.abs(prev) : null;
+        }
+        return { year: r.fiscal_year, value: val, yoy };
+      });
+      this.setData({ chartMetricName: name, chartMetricData: data });
+    });
   },
 
   onHideMetricChart() {
     this.setData({ chartMetricName: '', chartMetricData: [] });
   },
 
-  onRetry() {
-    this.loadDetail();
-    this.loadHistory();
-    this.loadChartData();
+  // ── 帮助弹窗 ───────────────────────
+  onHelpTap(e) {
+    const name = e.currentTarget.dataset.name;
+    this.setData({ helpName: name, helpText: HELP[name] || '暂无说明' });
   },
+  onCloseHelp() {
+    this.setData({ helpText: '' });
+  },
+
+  onRetry() { this.loadAll(); },
 });

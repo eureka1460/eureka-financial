@@ -2,163 +2,82 @@
   <view wx:if="{{loading}}" class="loading-text">加载中...</view>
 
   <view wx:elif="{{error}}" class="empty-state">
-    <text class="icon">⚠️</text>
-    <text class="text">{{error}}</text>
-    <button class="btn btn-outline" style="margin-top: 24rpx;" bindtap="onRetry">重试</button>
+    <text class="text">⚠️ {{error}}</text>
+    <button class="btn btn-outline" style="margin-top:24rpx" bindtap="onRetry">重试</button>
   </view>
 
   <block wx:else>
     <!-- 股票头部 -->
-    <view class="stock-header card">
-      <view class="header-top">
-        <text class="text-xl font-bold">{{stock.name}}</text>
-        <text class="tag tag-neutral" style="margin-left: 12rpx;">{{stock.symbol}}</text>
+    <view class="header card">
+      <view class="flex justify-between items-center">
+        <view>
+          <text class="text-2xl font-bold">{{stock.name}}</text>
+          <text class="text-sm text-secondary" style="margin-left:12rpx">{{stock.symbol}}</text>
+        </view>
+        <text class="tag tag-neutral">{{marketLabel}}</text>
       </view>
-      <view class="header-meta">
-        <text class="text-sm text-secondary">{{stock.industry || '--'}}</text>
-        <text class="text-sm text-secondary" style="margin-left: 12rpx;">{{stock.market === 'SH' ? '上海' : stock.market === 'SZ' ? '深圳' : stock.market === 'BJ' ? '北交所' : ''}}</text>
-      </view>
-      <view class="header-actions">
-        <button class="btn btn-outline" bindtap="goValuation" style="flex:1; margin-right: 12rpx; font-size: 26rpx; padding: 12rpx 0;">估值</button>
-        <button class="btn btn-primary" bindtap="goScreener" style="flex:1; font-size: 26rpx; padding: 12rpx 0;">条件筛选</button>
-      </view>
+      <view class="text-xs text-muted" style="margin-top:4rpx">{{stock.industry || '行业未知'}}</view>
     </view>
 
-    <!-- 盈利能力指标 -->
+    <!-- 多期数据对比表 -->
     <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">盈利能力</text>
-      <metric-bar label="净资产收益率 (ROE)" field="roe" value="{{financial.roe || 0}}" showValue="{{roe}}" max="{{0.5}}" color="#3B82F6" bind:tapmetric="onTapMetric" />
-      <metric-bar label="总资产收益率 (ROA)" field="roa" value="{{financial.roa || 0}}" showValue="{{roa}}" max="{{0.3}}" color="#6366F1" bind:tapmetric="onTapMetric" />
-      <metric-bar label="毛利率" field="gross_margin" value="{{financial.gross_margin || 0}}" showValue="{{grossMargin}}" max="{{0.8}}" color="#8B5CF6" bind:tapmetric="onTapMetric" />
-      <metric-bar label="净利率" field="net_margin" value="{{financial.net_margin || 0}}" showValue="{{netMargin}}" max="{{0.5}}" color="#A855F7" bind:tapmetric="onTapMetric" />
-      <metric-bar label="营业利润率" field="operating_margin" value="{{financial.operating_margin || 0}}" showValue="{{operatingMargin}}" max="{{0.5}}" color="#EC4899" bind:tapmetric="onTapMetric" />
-    </view>
+      <text class="text-md font-bold" style="margin-bottom:16rpx;display:block">财务数据对比</text>
 
-    <!-- 成长能力 -->
-    <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">成长能力</text>
-      <view wx:if="{{revenueYoY !== '--' || profitYoY !== '--'}}" class="flex gap-md">
-        <view class="growth-item flex-1">
-          <text class="text-xs text-secondary">营收同比</text>
-          <text class="text-lg font-bold {{revenueYoYClass}}">{{revenueYoY}}</text>
-        </view>
-        <view class="growth-item flex-1">
-          <text class="text-xs text-secondary">净利润同比</text>
-          <text class="text-lg font-bold {{profitYoYClass}}">{{profitYoY}}</text>
-        </view>
-      </view>
-      <view wx:else class="text-sm text-muted" style="text-align:center; padding: 20rpx 0;">
-        需要有两年以上的年报数据才能计算同比增长
-      </view>
-    </view>
+      <!-- 表头：时期标签 -->
+      <scroll-view scroll-x class="table-scroll">
+        <view class="table">
+          <!-- 表头行 -->
+          <view class="table-row table-header">
+            <view class="col-label">指标</view>
+            <view class="col-val" wx:for="{{periods}}" wx:key="key">{{item.label}}</view>
+          </view>
 
-    <!-- 偿债与流动性 -->
-    <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">偿债与流动性</text>
-      <metric-bar label="流动比率" field="current_ratio" value="{{financial.current_ratio || 0}}" showValue="{{currentRatio}}" max="{{3}}" color="#10B981" bind:tapmetric="onTapMetric" />
-      <metric-bar label="速动比率" field="quick_ratio" value="{{financial.quick_ratio || 0}}" showValue="{{quickRatio}}" max="{{2}}" color="#14B8A6" bind:tapmetric="onTapMetric" />
-      <metric-bar label="资产负债率" field="debt_to_assets" value="{{financial.debt_to_assets || 0}}" showValue="{{debtToAssets}}" max="{{0.8}}" color="#F59E0B" bind:tapmetric="onTapMetric" />
-    </view>
-
-    <!-- 核心数据 -->
-    <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 20rpx; display: block;">核心数据（点击查看历年图表）</text>
-      <view class="snapshot-grid">
-        <view class="snap-item" bindtap="onTapMetric" data-field="total_assets" data-name="总资产">
-          <text class="text-xs text-secondary">总资产 📊</text>
-          <text class="text-base font-bold">{{totalAssets}}</text>
-        </view>
-        <view class="snap-item" bindtap="onTapMetric" data-field="total_equity" data-name="净资产">
-          <text class="text-xs text-secondary">净资产 📊</text>
-          <text class="text-base font-bold">{{totalEquity}}</text>
-        </view>
-        <view class="snap-item" bindtap="onTapMetric" data-field="operating_revenue" data-name="营业收入">
-          <text class="text-xs text-secondary">营业收入 📊</text>
-          <text class="text-base font-bold">{{operatingRevenue}}</text>
-        </view>
-        <view class="snap-item" bindtap="onTapMetric" data-field="net_profit_attr_parent" data-name="归母净利润">
-          <text class="text-xs text-secondary">归母净利润 📊</text>
-          <text class="text-base font-bold">{{netProfit}}</text>
-        </view>
-        <view class="snap-item" bindtap="onTapMetric" data-field="fcf" data-name="自由现金流">
-          <text class="text-xs text-secondary">自由现金流 📊</text>
-          <text class="text-base font-bold">{{fcf}}</text>
-        </view>
-        <view class="snap-item" bindtap="onTapMetric" data-field="book_value_per_share" data-name="每股净资产">
-          <text class="text-xs text-secondary">每股净资产 📊</text>
-          <text class="text-base font-bold">{{bookValuePerShare}}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 点击指标弹出的图表 -->
-    <view wx:if="{{chartMetricName}}" class="card" style="margin-top: var(--spacing-md);">
-      <view class="flex justify-between items-center" style="margin-bottom: 16rpx;">
-        <text class="text-md font-bold">{{chartMetricName}} 历年趋势</text>
-        <text class="text-sm text-accent" bindtap="onHideMetricChart">关闭 ✕</text>
-      </view>
-      <history-chart title="{{chartMetricName}}" data="{{chartMetricData}}" unit="" color="#F59E0B" />
-    </view>
-
-    <!-- 历年趋势图表（可折叠） -->
-    <view class="card chart-section">
-      <view class="flex justify-between items-center" bindtap="onToggleCharts">
-        <text class="text-md font-bold">历年趋势图表</text>
-        <text class="text-sm text-secondary">{{showCharts ? '收起 ▲' : '展开 ▼'}}</text>
-      </view>
-      <view wx:if="{{showCharts}}">
-        <history-chart title="营业收入" data="{{chartRevenue}}" unit="元" color="#3B82F6" />
-        <history-chart title="归母净利润" data="{{chartProfit}}" unit="元" color="#22C55E" />
-        <history-chart title="ROE" data="{{chartROE}}" unit="%" color="#8B5CF6" />
-      </view>
-    </view>
-
-    <!-- 财务历史 -->
-    <view class="card">
-      <text class="text-md font-bold" style="margin-bottom: 16rpx; display: block;">财务历史</text>
-
-      <view class="flex gap-sm" style="margin-bottom: 20rpx;">
-        <view
-          wx:for="{{['', 'annual', 'q1', 'semi_annual', 'q3']}}"
-          wx:key="*this"
-          wx:for-item="rt"
-          class="tag {{historyReportType === rt ? 'tag-accent' : 'tag-neutral'}}"
-          data-type="{{rt}}"
-          bindtap="onHistoryTypeChange"
-        >{{rt === '' ? '全部' : rt === 'annual' ? '年报' : rt === 'q1' ? '一季报' : rt === 'semi_annual' ? '中报' : '三季报'}}</view>
-      </view>
-
-      <view wx:if="{{historyLoading}}" class="loading-text">加载历史数据...</view>
-
-      <view wx:elif="{{historyError}}" class="loading-text text-down">{{historyError}}</view>
-
-      <view wx:else>
-        <view wx:for="{{history}}" wx:key="report_date" class="history-item">
-          <view class="flex justify-between items-center">
-            <view>
-              <text class="text-sm font-medium">{{item._date}}</text>
-              <text class="tag tag-neutral" style="margin-left: 8rpx;">{{item._type}}</text>
+          <!-- 数据行 -->
+          <view class="table-row" wx:for="{{rows}}" wx:key="field" bindtap="onTapMetric" data-field="{{item.field}}" data-name="{{item.name}}">
+            <view class="col-label">
+              <text class="text-sm">{{item.name}}</text>
+              <text class="help-q" catchtap="onHelpTap" data-name="{{item.name}}">?</text>
             </view>
-            <view class="flex gap-md">
-              <view class="history-metric">
-                <text class="text-xs text-muted">营收</text>
-                <text class="text-sm font-medium">{{item._revenue}}</text>
-              </view>
-              <view class="history-metric">
-                <text class="text-xs text-muted">净利</text>
-                <text class="text-sm font-medium">{{item._profit}}</text>
-              </view>
-              <view class="history-metric">
-                <text class="text-xs text-muted">ROE</text>
-                <text class="text-sm font-medium">{{item._roe}}</text>
-              </view>
+            <view class="col-val" wx:for="{{item.vals}}" wx:key="idx" wx:for-item="v">
+              <text class="text-sm font-medium {{v.cls || ''}}">{{v.text || '--'}}</text>
             </view>
           </view>
         </view>
+      </scroll-view>
 
-        <view wx:if="{{history.length === 0}}" class="loading-text text-sm">
-          暂无财务数据
-        </view>
+      <view class="text-xs text-muted" style="text-align:center;margin-top:12rpx">
+        点击任意指标行查看历年趋势图表 ▼
+      </view>
+    </view>
+
+    <!-- 点击指标后弹出的图表 -->
+    <view wx:if="{{chartMetricName}}" class="card">
+      <view class="flex justify-between items-center" style="margin-bottom:16rpx">
+        <text class="text-md font-bold">{{chartMetricName}} 历年趋势</text>
+        <text class="text-sm text-accent" bindtap="onHideMetricChart">关闭 ✕</text>
+      </view>
+      <history-chart title="{{chartMetricName}}" data="{{chartMetricData}}" color="#F59E0B" />
+    </view>
+
+    <!-- 帮助弹窗 -->
+    <view wx:if="{{helpText}}" class="help-overlay" bindtap="onCloseHelp">
+      <view class="help-box" catchtap="">
+        <text class="text-md font-bold" style="margin-bottom:16rpx;display:block">{{helpName}}</text>
+        <text class="text-sm">{{helpText}}</text>
+        <button class="btn btn-primary" style="margin-top:20rpx;width:100%" bindtap="onCloseHelp">知道了</button>
+      </view>
+    </view>
+
+    <!-- 历年趋势图表（折叠） -->
+    <view class="card">
+      <view class="flex justify-between items-center" bindtap="onToggleCharts">
+        <text class="text-md font-bold">核心指标图表</text>
+        <text class="text-sm text-secondary">{{showCharts ? '收起 ▲' : '展开 ▼'}}</text>
+      </view>
+      <view wx:if="{{showCharts}}">
+        <history-chart title="营业总收入" data="{{chartRevenue}}" color="#3B82F6" />
+        <history-chart title="归母净利润" data="{{chartProfit}}" color="#22C55E" />
+        <history-chart title="ROE" data="{{chartROE}}" color="#8B5CF6" />
       </view>
     </view>
   </block>
