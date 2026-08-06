@@ -5,5 +5,5 @@
   border-radius: var(--radius-sm);
 }
 .chart-title { display: block; margin-bottom: 12rpx; }
-.chart-scroll { width: 100%; white-space: nowrap; }
-.chart-canvas { height: 440rpx; display: block; }
+.chart-scroll { width: 100%; white-space: nowrap; overflow-x: auto; }
+.chart-canvas { display: block; }
