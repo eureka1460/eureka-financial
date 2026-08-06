@@ -362,8 +362,9 @@ class DataLoader:
         if s.current_assets and s.current_liabilities and s.current_liabilities > 0:
             ind["current_ratio"] = self._f(s.current_assets) / self._f(s.current_liabilities)
 
-        if s.cash_and_equivalents and s.current_liabilities and s.current_liabilities > 0:
-            quick_num = (self._f(s.cash_and_equivalents) + self._f(s.accounts_receivable or 0) + self._f(s.notes_receivable or 0))
+        # 速动比率 = (流动资产 - 存货) / 流动负债
+        if s.current_assets and s.current_liabilities and s.current_liabilities > 0:
+            quick_num = self._f(s.current_assets) - (self._f(s.inventory) or 0)
             ind["quick_ratio"] = quick_num / self._f(s.current_liabilities)
 
         if s.total_liabilities and s.total_assets and s.total_assets > 0:
