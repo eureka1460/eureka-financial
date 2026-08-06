@@ -22,8 +22,9 @@ BALANCE_SHEET_MAPPING = {
     "MONETARYFUNDS": "cash_and_equivalents",  # 货币资金
     "TRADE_FINASSET_NOTFVTPL": "trading_financial_assets",  # 交易性金融资产
     "FVTPL_FINASSET": "trading_financial_assets",  # 以公允价值计量的金融资产
-    "NOTES_RECEIV": "notes_receivable",  # 应收票据
-    "ACCOUNTS_RECEIVABLE": "accounts_receivable",  # 应收账款
+    "NOTE_RECE": "notes_receivable",  # 应收票据
+    "NOTE_ACCOUNTS_RECE": "notes_receivable",  # 应收款项融资（备选）
+    "ACCOUNTS_RECE": "accounts_receivable",  # 应收账款
     "ADVANCE_PAYMENT": "prepayments",  # 预付款项
     "PREPAYMENT": "prepayments",
     "OTHER_RECEIVABLES": "other_receivables",  # 其他应收款
