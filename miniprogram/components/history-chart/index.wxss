@@ -6,4 +6,4 @@
 }
 .chart-title { display: block; margin-bottom: 4rpx; font-size: 24rpx; }
 .chart-scroll { width: 100%; overflow-x: scroll; -webkit-overflow-scrolling: touch; }
-.chart-canvas { display: block; height: 320rpx; }
+.chart-canvas { display: block; height: 320rpx; min-width: 600px; }
