@@ -89,8 +89,7 @@ class ETLOrchestrator:
             logger.info(f"共 {len(stock_df)} 只股票待同步")
 
             # 步骤 1.5: 先写入股票基本信息
-            if not dry_run:
-                loader.upsert_stocks(stock_df)
+            loader.upsert_stocks(stock_df)
                 # 获取并写入行业分类
                 try:
                     logger.info("正在获取行业分类...")
@@ -230,8 +229,7 @@ class ETLOrchestrator:
             stock_df = self.fetcher.fetch_stock_list()
             logger.info(f"全 A 股共 {len(stock_df)} 只")
 
-            if not dry_run:
-                loader.upsert_stocks(stock_df)
+            loader.upsert_stocks(stock_df)
 
             sync_log.stocks_total = len(stock_df)
             db.commit()
@@ -247,7 +245,7 @@ class ETLOrchestrator:
                 for _, row in batch.iterrows():
                     symbol = str(row["symbol"]).strip()
                     try:
-                        self._sync_one_stock(symbol, years, loader, sync_log, dry_run)
+                        self._sync_one_stock(symbol, years, loader, sync_log)
                     except Exception as e:
                         logger.error(f"{symbol} 处理失败: {e}")
                         sync_log.stocks_failed = (sync_log.stocks_failed or 0) + 1
@@ -275,7 +273,7 @@ class ETLOrchestrator:
 
         return sync_log
 
-    def _sync_one_stock(self, symbol, years, loader, sync_log, dry_run=False):
+    def _sync_one_stock(self, symbol, years, loader, sync_log):
         """同步单只股票。"""
         data = self.fetcher.fetch_all_for_stock(symbol)
         bs_clean = self.cleaner.clean_balance_sheet(data.get("balance_sheet"), symbol)
@@ -288,11 +286,9 @@ class ETLOrchestrator:
 
         merged = self.cleaner.merge_statements(bs_clean, inc_clean, cf_clean, symbol)
 
-        if not dry_run:
-            count = loader.upsert_financials(merged)
-            sync_log.reports_fetched = (sync_log.reports_fetched or 0) + count
-            loader.compute_and_store_indicators(symbol)
-
+        count = loader.upsert_financials(merged)
+        sync_log.reports_fetched = (sync_log.reports_fetched or 0) + count
+        loader.compute_and_store_indicators(symbol)
         sync_log.stocks_synced = (sync_log.stocks_synced or 0) + 1
 
     # ═══════════════════════════════════════════════════════════
