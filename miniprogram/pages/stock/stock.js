@@ -102,13 +102,37 @@ Page({
       api.getFinancials(this.data.symbol, { years: 5 }).then(finRes => {
         const allData = finRes.data || [];
         const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
-        const annuals = allData.filter(r => r.report_type === 'annual').reverse();
-        const quarterlys = allData.filter(r => r.report_type !== 'annual').reverse();
+
+        // 年报缓存：每年的全年累计值（四个季度相加）
+        const annualCache = {};
+        for (const r of allData) {
+          const fy = r.fiscal_year;
+          if (!annualCache[fy]) {
+            // 深拷贝基准行
+            annualCache[fy] = JSON.parse(JSON.stringify(r));
+            annualCache[fy].report_type = 'annual';
+          } else {
+            // 累加数值字段
+            for (const k of Object.keys(r)) {
+              if (typeof r[k] === 'number') {
+                annualCache[fy][k] = (annualCache[fy][k] || 0) + r[k];
+              }
+            }
+          }
+        }
+        const annualData = Object.values(annualCache)
+          .sort((a, b) => b.fiscal_year - a.fiscal_year);
+
+        // 季报缓存：单季值，sort by date
+        const quarterlyData = allData
+          .filter(r => r.report_type !== 'annual')
+          .sort((a, b) => (a.report_date || '').localeCompare(b.report_date || ''));
+
         that.setData({
           stock,
           marketLabel: mktMap[stock.market] || stock.market || '',
-          annualData: annuals,
-          quarterlyData: quarterlys,
+          annualData,
+          quarterlyData,
           loading: false,
         });
         that.setData({ allDataCache: allData });
