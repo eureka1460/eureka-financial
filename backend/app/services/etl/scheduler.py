@@ -6,7 +6,7 @@ ETL 编排器。
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 import pandas as pd
@@ -194,13 +194,116 @@ class ETLOrchestrator:
         return sync_log
 
     # ═══════════════════════════════════════════════════════════
-    # 增量同步
+    # 全量分批同步
+    # ═══════════════════════════════════════════════════════════
+    def sync_all_stocks_batch(
+        self,
+        years: int = 5,
+        batch_size: int = 50,
+        start_from: int = 0,
+    ) -> SyncLog:
+        """全量分批同步：自动获取全 A 股列表，分批抓取。
+
+        Args:
+            years: 抓取年数
+            batch_size: 每批股票数
+            start_from: 从第几只开始（断点续传）
+        """
+        db = SessionLocal()
+        loader = DataLoader(db)
+
+        sync_log = SyncLog(
+            job_type="full_sync_batch",
+            status="running",
+            stocks_total=0,
+            stocks_synced=0,
+            stocks_failed=0,
+            reports_fetched=0,
+            started_at=datetime.now(),
+        )
+        db.add(sync_log)
+        db.commit()
+        log_id = sync_log.id
+
+        try:
+            logger.info("正在获取股票列表...")
+            stock_df = self.fetcher.fetch_stock_list()
+            logger.info(f"全 A 股共 {len(stock_df)} 只")
+
+            if not dry_run:
+                loader.upsert_stocks(stock_df)
+
+            sync_log.stocks_total = len(stock_df)
+            db.commit()
+
+            # 分批处理
+            total = len(stock_df)
+            for batch_start in range(start_from, total, batch_size):
+                batch_end = min(batch_start + batch_size, total)
+                batch = stock_df.iloc[batch_start:batch_end]
+                logger.info(f"=== 批次 {batch_start//batch_size + 1}: "
+                           f"第 {batch_start+1}-{batch_end} 只 / 共 {total} 只 ===")
+
+                for _, row in batch.iterrows():
+                    symbol = str(row["symbol"]).strip()
+                    try:
+                        self._sync_one_stock(symbol, years, loader, sync_log, dry_run)
+                    except Exception as e:
+                        logger.error(f"{symbol} 处理失败: {e}")
+                        sync_log.stocks_failed = (sync_log.stocks_failed or 0) + 1
+
+                # 每批提交一次
+                db.commit()
+                logger.info(
+                    f"批次完成，累计: 成功 {sync_log.stocks_synced or 0}, "
+                    f"失败 {sync_log.stocks_failed or 0}, "
+                    f"进度: {batch_end}/{total} ({batch_end*100//total}%)"
+                )
+
+            sync_log.status = "success" if (sync_log.stocks_failed or 0) == 0 else "partial"
+
+        except Exception as e:
+            logger.error(f"分批同步异常: {e}", exc_info=True)
+            sync_log.status = "failed"
+            sync_log.error_details = str(e)
+
+        finally:
+            sync_log.completed_at = datetime.now()
+            db.commit()
+            loader.close()
+            db.close()
+
+        return sync_log
+
+    def _sync_one_stock(self, symbol, years, loader, sync_log, dry_run=False):
+        """同步单只股票。"""
+        data = self.fetcher.fetch_all_for_stock(symbol)
+        bs_clean = self.cleaner.clean_balance_sheet(data.get("balance_sheet"), symbol)
+        inc_clean = self.cleaner.clean_income_statement(data.get("income_statement"), symbol)
+        cf_clean = self.cleaner.clean_cash_flow(data.get("cash_flow"), symbol)
+
+        bs_clean = self._filter_years(bs_clean, years)
+        inc_clean = self._filter_years(inc_clean, years)
+        cf_clean = self._filter_years(cf_clean, years)
+
+        merged = self.cleaner.merge_statements(bs_clean, inc_clean, cf_clean, symbol)
+
+        if not dry_run:
+            count = loader.upsert_financials(merged)
+            sync_log.reports_fetched = (sync_log.reports_fetched or 0) + count
+            loader.compute_and_store_indicators(symbol)
+
+        sync_log.stocks_synced = (sync_log.stocks_synced or 0) + 1
+
+    # ═══════════════════════════════════════════════════════════
+    # 增量同步（季度更新用）
     # ═══════════════════════════════════════════════════════════
     def incremental_sync(self) -> SyncLog:
-        """增量同步：仅更新有新报表期的股票。
+        """增量同步：仅更新有新报表的股票。
 
-        对比数据库中每只股票的 MAX(report_date) 与 akshare 最新可用数据，
-        仅对有新报表的股票进行抓取。
+        对比每只股票的 MAX(report_date) 与当前日期，
+        如果最新季报出来后还没同步，则抓取更新。
+        适用场景：每季度财报披露后触发一次。
         """
         db = SessionLocal()
         loader = DataLoader(db)
@@ -218,14 +321,53 @@ class ETLOrchestrator:
         db.commit()
 
         try:
-            # TODO: 实现增量同步逻辑
-            # 1. 查询 DB 中每只股票的 MAX(report_date)
-            # 2. 批量查询 akshare 最新报表期
-            # 3. 识别需要更新的股票
-            # 4. 执行抓取
-            logger.warning("增量同步暂未实现，请使用全量同步")
-            sync_log.status = "failed"
-            sync_log.error_details = "增量同步功能尚未实现"
+            # 获取最新披露窗口
+            from app.models.financials import FinancialStatement
+            from sqlalchemy import func as sql_func
+
+            today = datetime.now().date()
+            current_year = today.year
+
+            # 确定当前应已披露的最新报表期
+            if today >= date(current_year, 5, 1):
+                latest_period = date(current_year, 3, 31)  # Q1
+            elif today >= date(current_year - 1, 5, 1):
+                latest_period = date(current_year - 1, 12, 31)  # 上年度年报
+            else:
+                latest_period = date(current_year - 1, 9, 30)  # 上年度 Q3
+
+            # 查询哪些股票还没有最新报表
+            from app.models.stocks import Stock
+            stocks = db.query(Stock.symbol).all()
+            symbol_list = [s[0] for s in stocks]
+            sync_log.stocks_total = len(symbol_list)
+
+            logger.info(f"增量同步: {len(symbol_list)} 只股票，目标报表期 ≥ {latest_period}")
+
+            for symbol in symbol_list:
+                latest = (
+                    db.query(FinancialStatement)
+                    .filter(FinancialStatement.symbol == symbol)
+                    .order_by(FinancialStatement.report_date.desc())
+                    .first()
+                )
+
+                # 已有最新报表则跳过
+                if latest and latest.report_date >= latest_period:
+                    sync_log.stocks_synced = (sync_log.stocks_synced or 0) + 1
+                    continue
+
+                # 需要更新
+                try:
+                    self._sync_one_stock(symbol, 1, loader, sync_log)
+                except Exception as e:
+                    logger.error(f"{symbol} 增量更新失败: {e}")
+                    sync_log.stocks_failed = (sync_log.stocks_failed or 0) + 1
+
+                if (sync_log.stocks_synced or 0) % 100 == 0:
+                    db.commit()
+
+            sync_log.status = "success" if (sync_log.stocks_failed or 0) == 0 else "partial"
 
         except Exception as e:
             logger.error(f"增量同步异常: {e}", exc_info=True)

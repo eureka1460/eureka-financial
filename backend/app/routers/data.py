@@ -31,11 +31,8 @@ def trigger_sync(
     request: SyncRequest,
     db: Session = Depends(get_db),
 ):
-    """触发 ETL 数据同步任务（后台执行）。
+    """触发 ETL 数据同步任务（后台执行）。"""
 
-    同步在后台线程中异步执行，立即返回 job_id 用于查询进度。
-    """
-    # 后台线程执行同步
     def _run_sync():
         orchestrator = ETLOrchestrator()
         if request.sync_type == "full_sync":
@@ -44,8 +41,14 @@ def trigger_sync(
                 symbols=request.symbols,
                 report_types=request.report_types,
             )
-        else:
+        elif request.sync_type == "incremental_sync":
             orchestrator.incremental_sync()
+        elif request.sync_type == "batch_sync":
+            orchestrator.sync_all_stocks_batch(
+                years=request.years,
+                batch_size=request.batch_size or 50,
+                start_from=request.start_from or 0,
+            )
 
     thread = threading.Thread(target=_run_sync, daemon=True)
     thread.start()

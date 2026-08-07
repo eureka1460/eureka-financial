@@ -85,7 +85,9 @@ class IndicatorMeta(BaseModel):
 class SyncRequest(BaseModel):
     """触发 ETL 数据同步的请求体。"""
 
-    sync_type: str = Field("full_sync", description="同步类型: full_sync / incremental_sync")
+    sync_type: str = Field("full_sync", description="同步类型: full_sync / incremental_sync / batch_sync")
     years: int = Field(5, ge=1, le=10, description="抓取年数")
     symbols: Optional[list[str]] = Field(None, max_items=100, description="指定股票代码列表")
     report_types: Optional[list[str]] = Field(None, description="指定报表类型")
+    batch_size: Optional[int] = Field(None, ge=10, le=200, description="分批大小(batch_sync时使用)")
+    start_from: Optional[int] = Field(None, ge=0, description="起始位置(断点续传)")
