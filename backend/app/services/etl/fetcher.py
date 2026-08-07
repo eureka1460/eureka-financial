@@ -242,32 +242,26 @@ class DataFetcher:
             ),
         )
 
-    # ── 利润表（按报告期）──────────────────────────────────
+    # ── 利润表 ──────────────────────────────────
     def fetch_income_statement(self, symbol: str) -> pd.DataFrame:
-        """获取利润表（按报告期，年报为全年累计值）。
-
-        主源：东方财富 (stock_profit_sheet_by_report_em)
-        """
+        """获取利润表。"""
         em_sym = _to_em_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="income_statement_report",
+            func_name="income_statement",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_profit_sheet_by_report_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_profit_sheet_by_quarterly_em(symbol=em_sym),
+            primary_fn=lambda: ak.stock_profit_sheet_by_quarterly_em(symbol=em_sym),
+            fallback_fn=lambda: ak.stock_profit_sheet_by_report_em(symbol=em_sym),
         )
 
-    # ── 现金流量表（按报告期）────────────────────────────────
+    # ── 现金流量表 ────────────────────────────────
     def fetch_cash_flow(self, symbol: str) -> pd.DataFrame:
-        """获取现金流量表（按报告期，年报为全年累计值）。
-
-        主源：东方财富 (stock_cash_flow_sheet_by_report_em)
-        """
+        """获取现金流量表。"""
         em_sym = _to_em_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="cash_flow_report",
+            func_name="cash_flow",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_cash_flow_sheet_by_report_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_cash_flow_sheet_by_quarterly_em(symbol=em_sym),
+            primary_fn=lambda: ak.stock_cash_flow_sheet_by_quarterly_em(symbol=em_sym),
+            fallback_fn=lambda: ak.stock_cash_flow_sheet_by_report_em(symbol=em_sym),
         )
 
     # ── 批量获取 ────────────────────────────────────────────
