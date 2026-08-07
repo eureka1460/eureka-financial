@@ -121,7 +121,7 @@ Page({
           }
         }
         const annualData = Object.values(annualCache)
-          .sort((a, b) => b.fiscal_year - a.fiscal_year);
+          .sort((a, b) => a.fiscal_year - b.fiscal_year);
 
         // 季报缓存：单季值，sort by date
         const quarterlyData = allData
