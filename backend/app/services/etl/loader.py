@@ -279,25 +279,27 @@ class DataLoader:
                 logger.error(f"{symbol} {date_str} 指标入库失败: {e}")
 
         self.db.commit()
-        # FCF = 经营活动现金流净额 - 投资活动现金流出
-        #      = net_operating_cashflow + net_investing_cashflow
-        #        (投资活动净额通常为负，加上即等于减去流出)
+        # FCF = 经营CF + 投资CF净额，存到年报指标里
         try:
-            stmt = (
+            stmts = (
                 self.db.query(FinancialStatement)
-                .filter(FinancialStatement.symbol == symbol)
+                .filter(
+                    FinancialStatement.symbol == symbol,
+                    FinancialStatement.report_type == 'annual',
+                )
                 .order_by(FinancialStatement.report_date.desc())
-                .first()
+                .limit(3)
+                .all()
             )
-            if stmt and stmt.net_operating_cashflow is not None:
-                ocf = float(stmt.net_operating_cashflow)
-                invest_out = float(stmt.net_investing_cashflow or 0)
-                ind = {
-                    'symbol': symbol, 'report_date': stmt.report_date,
-                    'report_type': stmt.report_type, 'fiscal_year': stmt.fiscal_year,
-                    'fcf': ocf + invest_out,
-                }
-                self._upsert_indicator(ind)
+            for stmt in stmts:
+                if stmt.net_operating_cashflow is not None:
+                    ocf = float(stmt.net_operating_cashflow)
+                    invest_out = float(stmt.net_investing_cashflow or 0)
+                    self._upsert_indicator({
+                        'symbol': symbol, 'report_date': stmt.report_date,
+                        'report_type': 'annual', 'fiscal_year': stmt.fiscal_year,
+                        'fcf': ocf + invest_out,
+                    })
         except Exception as e:
             logger.error(f"{symbol} FCF 计算失败: {e}")
 
