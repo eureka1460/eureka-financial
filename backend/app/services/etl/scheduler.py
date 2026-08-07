@@ -226,15 +226,19 @@ class ETLOrchestrator:
 
         try:
             logger.info("正在获取股票列表...")
-            try:
-                stock_df = self.fetcher.fetch_stock_list()
-            except Exception:
-                # 备选：从 DB 读取已有股票
-                logger.warning("在线获取失败，从数据库读取已有股票")
-                from app.models.stocks import Stock
-                db_stocks = db.query(Stock.symbol, Stock.name).all()
+            import signal
+            stock_df = None
+            # 先用已有 DB 数据，异步更新股票列表
+            from app.models.stocks import Stock
+            db_stocks = db.query(Stock.symbol, Stock.name).all()
+            if db_stocks:
                 import pandas as pd
                 stock_df = pd.DataFrame(db_stocks, columns=["symbol", "name"])
+                logger.info(f"从数据库读取 {len(stock_df)} 只股票")
+
+            if not stock_df or len(stock_df) == 0:
+                stock_df = self.fetcher.fetch_stock_list()
+                loader.upsert_stocks(stock_df)
             logger.info(f"共 {len(stock_df)} 只股票")
 
             loader.upsert_stocks(stock_df)
