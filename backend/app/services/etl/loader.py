@@ -212,7 +212,6 @@ class DataLoader:
             '营业利润同比增长率': 'operating_profit_yoy',
             '流动比率': 'current_ratio',
             '速动比率': 'quick_ratio',
-            '保守速动比率': 'quick_ratio',  # 用保守速动作为默认
             '资产负债率': 'debt_to_assets',
             '产权比率': 'debt_to_equity',
             '存货周转率': 'inventory_turnover',
