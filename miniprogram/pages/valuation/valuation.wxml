@@ -67,9 +67,14 @@
             <text class="text-xs text-secondary">无风险利率</text>
             <input class="wacc-input" type="digit" value="{{waccDetail.risk_free_rate}}" data-field="risk_free_rate" bindinput="onWaccInput" />
           </view>
-          <view class="wacc-row">
+          <view class="wacc-row" style="flex-wrap:wrap">
             <text class="text-xs text-secondary">β（贝塔）</text>
-            <input class="wacc-input" type="digit" value="{{waccDetail.beta}}" data-field="beta" bindinput="onWaccInput" />
+            <view class="flex items-center gap-xs">
+              <picker mode="selector" range="{{betaIndustries}}" bindchange="onPickBeta">
+                <text class="text-xs" style="color:var(--color-accent);border:1rpx solid var(--color-border);padding:2rpx 8rpx;border-radius:4rpx;">{{selectedIndustry || '行业参考'}} ▼</text>
+              </picker>
+              <input class="wacc-input" type="digit" value="{{waccDetail.beta}}" data-field="beta" bindinput="onWaccInput" />
+            </view>
           </view>
           <view class="wacc-row">
             <text class="text-xs text-secondary">市场风险溢价</text>

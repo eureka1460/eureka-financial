@@ -114,6 +114,30 @@ Page({
     this.setData(update);
   },
 
+  betaIndustries: [
+    '食品饮料(0.8)', '医药生物(0.9)', '银行(0.9)', '非银金融(1.0)',
+    '电子(1.3)', '计算机(1.3)', '电力设备(1.2)', '汽车(1.1)',
+    '军工(1.1)', '公用事业(0.7)', '交通运输(0.9)', '房地产(1.0)',
+    '化工(1.2)', '有色金属(1.2)', '家用电器(0.9)',
+  ],
+  betaValues: [0.8, 0.9, 0.9, 1.0, 1.3, 1.3, 1.2, 1.1, 1.1, 0.7, 0.9, 1.0, 1.2, 1.2, 0.9],
+  selectedIndustry: '',
+
+  onPickBeta(e) {
+    const idx = e.detail.value;
+    const beta = this.data.betaValues[idx];
+    const industry = this.data.betaIndustries[idx];
+    const detail = { ...this.data.waccDetail, beta };
+    // 重算 WACC
+    const ew = detail.equity_weight || 0;
+    const dw = 1 - ew;
+    const coe = (detail.risk_free_rate || 0) + beta * (detail.market_premium || 0.055);
+    const cod = detail.cost_of_debt || 0;
+    const tax = detail.tax_rate || 0.25;
+    detail.wacc = +(ew * coe + dw * cod * (1 - tax)).toFixed(4);
+    this.setData({ waccDetail: detail, 'dcfParams.wacc': detail.wacc, selectedIndustry: industry });
+  },
+
   onToggleWacc() {
     this.setData({ showWaccDetail: !this.data.showWaccDetail });
   },
