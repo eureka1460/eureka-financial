@@ -124,39 +124,28 @@ Page({
     this.buildTable();
   },
 
-  // ── 构建多期对比表（仅年报，全年累计值）──
+  // ── 构建多期对比表（直接展示原始报表数据）──
   buildTable() {
     const allData = this.data.allDataCache;
     const yrs = this.data.tableYears;
     const now = new Date().getFullYear();
-    // 例如 near 5 年 = 2022-2026
     const minYear = now - yrs;
+    const typeMap = { annual: '年报', q1: '一季报', semi_annual: '中报', q3: '三季报' };
 
-    // 获取所有年报对应的全年累计值
-    const annuals = [];
+    // 按报告期直接取数据，不做任何加工
+    const periods = [];
+    const seen = new Set();
     for (const r of allData) {
       if (r.fiscal_year < minYear) continue;
-      if (r.report_type !== 'annual') continue;
-      // 汇总当年四个季度的值
-      const qs = allData.filter(q => q.fiscal_year === r.fiscal_year && q.report_type !== 'annual');
-      const summed = { ...r, report_type: 'annual' };
-      for (const q of qs) {
-        for (const key of Object.keys(q)) {
-          if (typeof q[key] === 'number') {
-            summed[key] = (summed[key] || 0) + q[key];
-          }
-        }
-      }
-      annuals.push({
-        key: r.fiscal_year,
-        date: r.report_date,
-        type: 'annual',
-        fy: r.fiscal_year,
-        label: r.fiscal_year + '年报',
-        data: summed,
+      const key = r.report_date + '_' + r.report_type;
+      if (seen.has(key) || periods.length >= 8) continue;
+      seen.add(key);
+      periods.push({
+        key, date: r.report_date, type: r.report_type, fy: r.fiscal_year,
+        label: r.fiscal_year + (typeMap[r.report_type] || r.report_type),
+        data: r,
       });
     }
-    const periods = annuals.slice(0, 5);
 
     const rows = METRICS.map((m) => {
       const vals = periods.map((p) => {
@@ -243,17 +232,7 @@ Page({
       ? this.data.annualData
       : this.data.quarterlyData;
 
-    if (period === 'quarterly') {
-      source = source.map((r, i, arr) => {
-        const raw = r[field] != null ? Number(r[field]) : 0;
-        let val = raw;
-        if (i > 0 && arr[i - 1].fiscal_year === r.fiscal_year) {
-          const prev = arr[i - 1][field] != null ? Number(arr[i - 1][field]) : 0;
-          val = raw - prev;
-        }
-        return { ...r, [field]: val };
-      });
-    }
+    // _by_quarterly_em 数据已是单季值，无需反累计
 
     if (source.length > 12) source = source.slice(-12);
 
