@@ -248,18 +248,27 @@ class DataLoader:
                     'fiscal_year': fy,
                 }
 
+                # 列名标准化（兼容不同编码）
+                row_keys = set(str(k).strip() for k in row.index)
                 for cn_col, db_field in col_map.items():
-                    if cn_col in row.index and db_field != '_date':
-                        raw = row[cn_col]
-                        if raw is not None and raw != False and str(raw) not in ('', 'nan', 'False'):
-                            try:
-                                v = float(str(raw).replace('%', '').replace('亿', '').replace('万', '').replace('元', '').strip())
-                                # 百分比值归一化（>1 表示已是百分比显示如"15.5%"）
-                                if any(k in cn_col for k in ('收益率', '利润率', '率', '比')):
-                                    v = v / 100 if v > 1 else v
-                                ind[db_field] = round(v, 6)
-                            except (ValueError, TypeError):
-                                pass
+                    if db_field == '_date':
+                        continue
+                    cn_key = str(cn_col).strip()
+                    if cn_key not in row_keys:
+                        continue
+                    raw = row[cn_col]
+                    if raw is None or raw is False:
+                        continue
+                    s = str(raw).strip()
+                    if s in ('', 'nan', 'False', 'None'):
+                        continue
+                    try:
+                        v = float(s.replace('%', '').replace('亿', '').replace('万', '').replace('元', ''))
+                        if any(k in cn_key for k in ('收益率', '利润率', '率', '比')):
+                            v = v / 100 if v > 1 else v
+                        ind[db_field] = round(v, 6)
+                    except (ValueError, TypeError):
+                        pass
 
                 if len(ind) > 4:
                     self._upsert_indicator(ind)
