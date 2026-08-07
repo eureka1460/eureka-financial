@@ -124,34 +124,40 @@ Page({
     this.buildTable();
   },
 
-  // ── 构建多期对比表 ──────────────────
+  // ── 构建多期对比表（仅年报，全年累计值）──
   buildTable() {
     const allData = this.data.allDataCache;
     const yrs = this.data.tableYears;
     const now = new Date().getFullYear();
-    const minYear = now - yrs + 1;
+    // 例如 near 5 年 = 2022-2026
+    const minYear = now - yrs;
 
-    // 取最近 6 条不同时期的数据
-    const periods = [];
-    const seen = new Set();
+    // 获取所有年报对应的全年累计值
+    const annuals = [];
     for (const r of allData) {
       if (r.fiscal_year < minYear) continue;
-      const key = r.report_date + '_' + r.report_type;
-      if (!seen.has(key) && periods.length < 6) {
-        seen.add(key);
-        const typeMap = { annual: '年报', q1: '一季报', semi_annual: '中报', q3: '三季报' };
-        periods.push({
-          key,
-          date: r.report_date,
-          type: r.report_type,
-          fy: r.fiscal_year,
-          label: r.fiscal_year + typeMap[r.report_type] || r.report_type,
-          data: r,
-        });
+      if (r.report_type !== 'annual') continue;
+      // 汇总当年四个季度的值
+      const qs = allData.filter(q => q.fiscal_year === r.fiscal_year && q.report_type !== 'annual');
+      const summed = { ...r, report_type: 'annual' };
+      for (const q of qs) {
+        for (const key of Object.keys(q)) {
+          if (typeof q[key] === 'number') {
+            summed[key] = (summed[key] || 0) + q[key];
+          }
+        }
       }
+      annuals.push({
+        key: r.fiscal_year,
+        date: r.report_date,
+        type: 'annual',
+        fy: r.fiscal_year,
+        label: r.fiscal_year + '年报',
+        data: summed,
+      });
     }
+    const periods = annuals.slice(0, 5);
 
-    // 构建每行指标
     const rows = METRICS.map((m) => {
       const vals = periods.map((p) => {
         const v = p.data[m.field];
