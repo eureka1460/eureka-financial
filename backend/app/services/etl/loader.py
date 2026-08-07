@@ -210,7 +210,6 @@ class DataLoader:
             '营业收入同比增长率': 'revenue_yoy',
             '净利润同比增长率': 'net_profit_yoy',
             '营业利润同比增长率': 'operating_profit_yoy',
-            '基本每股收益同比增长率': 'eps_yoy',
             '流动比率': 'current_ratio',
             '速动比率': 'quick_ratio',
             '保守速动比率': 'quick_ratio',  # 用保守速动作为默认
@@ -220,9 +219,10 @@ class DataLoader:
             '应收账款周转率': 'receivable_turnover',
             '总资产周转率': 'asset_turnover',
             '每股净资产': 'book_value_per_share',
-            '基本每股收益': 'basic_eps',
         }
 
+        from datetime import datetime as dt, date as dt_date
+        current_year = dt.now().year
         count = 0
         for _, row in df.iterrows():
             try:
@@ -230,12 +230,14 @@ class DataLoader:
                 if len(date_str) < 10:
                     continue
 
-                report_date = date_str[:10]
-                fy = int(report_date[:4])
+                rd = dt.strptime(date_str[:10], '%Y-%m-%d').date()
+                fy = rd.year
+                if fy < current_year - 5:
+                    continue
 
                 # 推断 report_type
-                m = int(report_date[5:7])
-                d = int(report_date[8:10])
+                m = rd.month
+                d = rd.day
                 if m == 12 and d == 31: rt = 'annual'
                 elif m == 9 and d == 30: rt = 'q3'
                 elif m == 6 and d == 30: rt = 'semi_annual'
@@ -244,7 +246,7 @@ class DataLoader:
 
                 ind = {
                     'symbol': symbol,
-                    'report_date': report_date,
+                    'report_date': rd,
                     'report_type': rt,
                     'fiscal_year': fy,
                 }
