@@ -124,28 +124,50 @@ Page({
     this.buildTable();
   },
 
-  // ── 构建多期对比表（直接展示原始报表数据）──
+  // ── 构建多期对比表（累计值：把前面季度加回来）──
   buildTable() {
     const allData = this.data.allDataCache;
     const yrs = this.data.tableYears;
     const now = new Date().getFullYear();
     const minYear = now - yrs;
     const typeMap = { annual: '年报', q1: '一季报', semi_annual: '中报', q3: '三季报' };
+    const order = ['q1', 'semi_annual', 'q3', 'annual'];
 
-    // 按报告期直接取数据，不做任何加工
-    const periods = [];
+    // 收集所有时期
+    const allPeriods = [];
     const seen = new Set();
     for (const r of allData) {
       if (r.fiscal_year < minYear) continue;
-      const key = r.report_date + '_' + r.report_type;
-      if (seen.has(key) || periods.length >= 8) continue;
+      const key = r.fiscal_year + '_' + r.report_type;
+      if (seen.has(key)) continue;
       seen.add(key);
-      periods.push({
-        key, date: r.report_date, type: r.report_type, fy: r.fiscal_year,
-        label: r.fiscal_year + (typeMap[r.report_type] || r.report_type),
-        data: r,
-      });
+      allPeriods.push({ ...r });
     }
+
+    // 按财年+报告顺序排序，计算累计值
+    allPeriods.sort((a, b) => {
+      if (a.fiscal_year !== b.fiscal_year) return a.fiscal_year - b.fiscal_year;
+      return order.indexOf(a.report_type) - order.indexOf(b.report_type);
+    });
+
+    // 同财年内，每期累加前面的值
+    for (let i = 1; i < allPeriods.length; i++) {
+      if (allPeriods[i].fiscal_year === allPeriods[i - 1].fiscal_year) {
+        for (const key of Object.keys(allPeriods[i])) {
+          if (typeof allPeriods[i][key] === 'number' && key !== 'fiscal_year') {
+            allPeriods[i][key] = (allPeriods[i][key] || 0) + (allPeriods[i - 1][key] || 0);
+          }
+        }
+      }
+    }
+
+    // 取最近 8 期
+    const periods = allPeriods.slice(-8).reverse().map(r => ({
+      key: r.fiscal_year + '_' + r.report_type,
+      date: r.report_date, type: r.report_type, fy: r.fiscal_year,
+      label: r.fiscal_year + (typeMap[r.report_type] || r.report_type),
+      data: r,
+    }));
 
     const rows = METRICS.map((m) => {
       const vals = periods.map((p) => {
