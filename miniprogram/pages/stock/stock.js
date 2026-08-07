@@ -232,7 +232,18 @@ Page({
       ? this.data.annualData
       : this.data.quarterlyData;
 
-    // _by_quarterly_em 数据已是单季值，无需反累计
+    // 季报反累计：数据是累计值，减掉上期得单季
+    if (period === 'quarterly') {
+      source = source.map((r, i, arr) => {
+        const raw = r[field] != null ? Number(r[field]) : 0;
+        let val = raw;
+        if (i > 0 && arr[i - 1].fiscal_year === r.fiscal_year) {
+          const prev = arr[i - 1][field] != null ? Number(arr[i - 1][field]) : 0;
+          val = raw - prev;
+        }
+        return { ...r, [field]: val };
+      });
+    }
 
     if (source.length > 12) source = source.slice(-12);
 
