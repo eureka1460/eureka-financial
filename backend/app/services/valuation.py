@@ -232,8 +232,8 @@ class ValuationEngine:
         return stock
 
     def _auto_fill_fcf(self, symbol: str) -> Optional[float]:
-        """取最近 3 次年报 FCF 的中位数（避免极端年份拉偏）。"""
-        inds = (
+        """取最近一年年报 FCF。"""
+        ind = (
             self.db.query(FinancialIndicator)
             .filter(
                 FinancialIndicator.symbol == symbol,
@@ -241,18 +241,9 @@ class ValuationEngine:
                 FinancialIndicator.fcf.isnot(None),
             )
             .order_by(FinancialIndicator.fiscal_year.desc())
-            .limit(3)
-            .all()
+            .first()
         )
-        if inds:
-            values = sorted([float(i.fcf) for i in inds if i.fcf is not None])
-            if not values:
-                return None
-            # 取中位数
-            mid = values[len(values) // 2]
-            # 至少取正的
-            return max(mid, values[-1], 0) if values[-1] > 0 else mid
-        return None
+        return float(ind.fcf) if ind else None
 
     def _auto_fill_net_debt(self, symbol: str) -> Optional[float]:
         """自动填充净负债 = 短期借款 + 长期借款 - 货币资金。"""
