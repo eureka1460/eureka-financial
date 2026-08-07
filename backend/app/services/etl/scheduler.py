@@ -231,6 +231,16 @@ class ETLOrchestrator:
 
             loader.upsert_stocks(stock_df)
 
+            # 行业分类
+            try:
+                logger.info("正在获取行业分类...")
+                ind_df = self.fetcher.fetch_industry_map()
+                if ind_df is not None and len(ind_df) > 0:
+                    loader.upsert_industries(ind_df)
+                    logger.info(f"行业分类更新: {len(ind_df)} 条")
+            except Exception as e:
+                logger.warning(f"行业分类获取失败: {e}")
+
             sync_log.stocks_total = len(stock_df)
             db.commit()
 
