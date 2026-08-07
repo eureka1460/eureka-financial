@@ -261,7 +261,7 @@ class DataLoader:
                             except (ValueError, TypeError):
                                 pass
 
-                if len(ind) > 5:
+                if len(ind) > 4:
                     self._upsert_indicator(ind)
                     count += 1
             except Exception as e:
