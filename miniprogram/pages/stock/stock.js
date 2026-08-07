@@ -185,8 +185,8 @@ Page({
       }
     }
 
-    // 取最近 8 期
-    const periods = allPeriods.slice(-8).reverse().map(r => ({
+    // 取最近 12 期（3年×4季度）
+    const periods = allPeriods.slice(-12).reverse().map(r => ({
       key: r.fiscal_year + '_' + r.report_type,
       date: r.report_date, type: r.report_type, fy: r.fiscal_year,
       label: r.fiscal_year + (typeMap[r.report_type] || r.report_type),
