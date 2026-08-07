@@ -7,7 +7,55 @@
 > - `开发流程与进度核验文档.md` — 进度追踪（做到哪了）
 > - `ARCHITECTURE.md` — 代码地图（每个文件干什么的）
 
-> **最后更新**：2026-08-07（阶段 1-7 完成，上线前测试）
+> **最后更新**：2026-08-07（全阶段完成，30只股票测试中）
+
+---
+
+## 零、关键架构决策
+
+| 决策 | 选择 | 原因 |
+|------|------|------|
+| 财报数据源 | 东方财富 `_by_quarterly_em` | 云托管可用，单季度数据 |
+| 指标数据源 | 同花顺 `stock_financial_abstract_ths` | 预计算，覆盖所有季度，无需自行计算 |
+| FCF 公式 | 经营CF + 投资CF净额 | 用户指定公式 |
+| 数据库 | MySQL 8.0（云开发托管） | 数据永久保存，不受容器重启影响 |
+| 部署 | 微信云托管 + GitHub 自动部署 | 推送即部署 |
+| 前端图表 | 纯 CSS/WXML 内联 | 避免 Canvas 兼容性问题 |
+
+## 五、API 接口清单（完整）
+
+### 数据类
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/stocks` | 股票列表（搜索+分页+行业筛） |
+| GET | `/api/v1/stocks/{symbol}` | 股票详情+最新指标 |
+| GET | `/api/v1/stocks/{symbol}/financials` | 财务历史（按报表类型/年限过滤） |
+| GET | `/api/v1/indicators` | 可筛选指标元数据 |
+
+### 筛选与估值
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/screener/search` | 多条件选股 |
+| POST | `/api/v1/valuation/dcf` | DCF 估值（WACC 自动计算） |
+| POST | `/api/v1/valuation/ddm` | DDM 估值（股利自动填充） |
+
+### 同步管理
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/data/sync` | 触发同步（full/batch/incremental） |
+| GET | `/api/v1/data/sync/status` | 查询最近同步任务 |
+| POST | `/api/v1/data/seed-mock` | 注入3只测试股票 |
+
+### 调试
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/health` | 健康检查（含网络测） |
+| GET | `/api/v1/test-akshare` | akshare 连通性测试 |
+| GET | `/api/v1/test-ths` | 同花顺指标接口测试 |
 
 ---
 
