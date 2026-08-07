@@ -232,11 +232,7 @@ class ValuationEngine:
         return stock
 
     def _auto_fill_fcf(self, symbol: str) -> Optional[float]:
-        """自动填充自由现金流。
-
-        取最近 3 次年报 FCF 的平均值（避免单年异常波动）。
-        financial_indicators 中的 FCF 已经是全年汇总值。
-        """
+        """取最近 3 次年报 FCF 的中位数（避免极端年份拉偏）。"""
         inds = (
             self.db.query(FinancialIndicator)
             .filter(
@@ -249,8 +245,13 @@ class ValuationEngine:
             .all()
         )
         if inds:
-            values = [float(i.fcf) for i in inds if i.fcf is not None]
-            return sum(values) / len(values) if values else None
+            values = sorted([float(i.fcf) for i in inds if i.fcf is not None])
+            if not values:
+                return None
+            # 取中位数
+            mid = values[len(values) // 2]
+            # 至少取正的
+            return max(mid, values[-1], 0) if values[-1] > 0 else mid
         return None
 
     def _auto_fill_net_debt(self, symbol: str) -> Optional[float]:
