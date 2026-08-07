@@ -346,6 +346,39 @@ def seed_mock_data(db: Session = Depends(get_db)):
     )
 
 
+@router.post("/data/debug-ths", response_model=APIResponse[dict])
+def debug_ths(db: Session = Depends(get_db)):
+    """测试同花顺指标加载。"""
+    from app.services.etl.loader import DataLoader
+    loader = DataLoader(db)
+    import akshare as ak
+    result = {}
+    try:
+        df = ak.stock_financial_abstract_ths(symbol="000333", indicator="按报告期")
+        result["rows"] = len(df)
+        result["cols_first5"] = list(df.columns)[:5]
+        result["cols_last5"] = list(df.columns)[-5:]
+
+        # 测试匹配
+        row = df.iloc[-1]  # 最新一条
+        result["latest_date"] = str(row.get("报告期", "?"))
+        result["roe_raw"] = str(row.get("净资产收益率", "?"))
+        result["quick_raw"] = str(row.get("速动比率", "?"))
+    except Exception as e:
+        result["error"] = f"{type(e).__name__}: {e}"
+        import traceback
+        result["trace"] = traceback.format_exc()[-500:]
+
+    # 也测试 loader 方法
+    try:
+        n = loader.compute_and_store_indicators("000333")
+        result["loader_result"] = n
+    except Exception as e:
+        result["loader_error"] = f"{type(e).__name__}: {e}"
+
+    return APIResponse(data=result)
+
+
 # ═══════════════════════════════════════════════════════════════
 # ETL 调试
 # ═══════════════════════════════════════════════════════════════

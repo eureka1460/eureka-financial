@@ -192,7 +192,8 @@ class DataLoader:
             import akshare as ak
             df = ak.stock_financial_abstract_ths(symbol=symbol, indicator='按报告期')
         except Exception as e:
-            logger.error(f"{symbol}: 同花顺指标抓取失败: {e}")
+            import traceback
+            logger.error(f"{symbol}: 同花顺指标抓取失败: {e}\n{traceback.format_exc()}")
             return 0
 
         if df is None or len(df) == 0:
