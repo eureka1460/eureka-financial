@@ -59,6 +59,8 @@ Page({
     // 对比表
     periods: [],
     rows: [],
+    tableYears: 3,
+    allDataCache: [],
 
     // 图表
     showCharts: false,
@@ -97,7 +99,7 @@ Page({
     const that = this;
     api.getStockDetail(this.data.symbol).then(detailRes => {
       const stock = detailRes.data;
-      api.getFinancials(this.data.symbol, { years: 3 }).then(finRes => {
+      api.getFinancials(this.data.symbol, { years: 5 }).then(finRes => {
         const allData = finRes.data || [];
         const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
         const annuals = allData.filter(r => r.report_type === 'annual').reverse();
@@ -109,18 +111,31 @@ Page({
           quarterlyData: quarterlys,
           loading: false,
         });
-        that.buildTable(allData);
+        that.setData({ allDataCache: allData });
+        that.buildTable();
         that.buildCharts(allData);
       }).catch(e => that.setData({ error: e.message || '加载失败', loading: false }));
     }).catch(e => that.setData({ error: e.message || '加载失败', loading: false }));
   },
 
+  onFilterYears(e) {
+    const y = parseInt(e.currentTarget.dataset.y);
+    this.setData({ tableYears: y });
+    this.buildTable();
+  },
+
   // ── 构建多期对比表 ──────────────────
-  buildTable(allData) {
+  buildTable() {
+    const allData = this.data.allDataCache;
+    const yrs = this.data.tableYears;
+    const now = new Date().getFullYear();
+    const minYear = now - yrs + 1;
+
     // 取最近 6 条不同时期的数据
     const periods = [];
     const seen = new Set();
     for (const r of allData) {
+      if (r.fiscal_year < minYear) continue;
       const key = r.report_date + '_' + r.report_type;
       if (!seen.has(key) && periods.length < 6) {
         seen.add(key);
