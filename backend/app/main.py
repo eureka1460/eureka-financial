@@ -96,7 +96,7 @@ def test_ths():
         return JSONResponse({
             "code": 200,
             "message": f"ok, {len(df)} rows, {len(df.columns)} cols",
-            "data": {"columns": list(df.columns)[:20], "row0": str(df.iloc[0].to_dict()) if len(df) > 0 else "empty"},
+            "data": {"columns": list(df.columns), "rows": len(df)},
         })
     except Exception as e:
         return JSONResponse({
