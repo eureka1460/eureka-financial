@@ -117,12 +117,12 @@ Page({
 
   // ── 构建多期对比表 ──────────────────
   buildTable(allData) {
-    // 取最近 4 条不同时期的数据
+    // 取最近 6 条不同时期的数据
     const periods = [];
     const seen = new Set();
     for (const r of allData) {
       const key = r.report_date + '_' + r.report_type;
-      if (!seen.has(key) && periods.length < 4) {
+      if (!seen.has(key) && periods.length < 6) {
         seen.add(key);
         const typeMap = { annual: '年报', q1: '一季报', semi_annual: '中报', q3: '三季报' };
         periods.push({
