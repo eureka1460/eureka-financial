@@ -56,14 +56,27 @@ app.add_middleware(
 def on_startup():
     """应用启动时自动创建数据库表，空库时注入测试数据。"""
     Base.metadata.create_all(bind=engine)
-    # 空库自动注入 mock 数据
+    # 空库自动注入数据
     from app.core.database import SessionLocal
     from app.models.stocks import Stock
     db = SessionLocal()
     try:
         if db.query(Stock).count() == 0:
-            from app.routers.data import seed_mock_data
-            seed_mock_data(db)
+            import csv, os
+            csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'stock_list.csv')
+            if os.path.exists(csv_path):
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        sym = str(row.get('symbol','')).strip().zfill(6)
+                        name = str(row.get('name','')).strip()
+                        if sym and name:
+                            mkt = 'SH' if sym.startswith('6') else 'SZ' if sym.startswith(('0','3')) else 'BJ'
+                            db.add(Stock(symbol=sym, name=name, market=mkt))
+                db.commit()
+            else:
+                from app.routers.data import seed_mock_data
+                seed_mock_data(db)
     finally:
         db.close()
 
