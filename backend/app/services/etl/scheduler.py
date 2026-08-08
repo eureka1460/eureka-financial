@@ -236,7 +236,7 @@ class ETLOrchestrator:
                 stock_df = pd.DataFrame(db_stocks, columns=["symbol", "name"])
                 logger.info(f"从数据库读取 {len(stock_df)} 只股票")
 
-            if not stock_df or len(stock_df) == 0:
+            if stock_df is None or len(stock_df) == 0:
                 stock_df = self.fetcher.fetch_stock_list()
                 loader.upsert_stocks(stock_df)
             logger.info(f"共 {len(stock_df)} 只股票")
