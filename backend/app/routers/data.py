@@ -91,6 +91,40 @@ def get_sync_status(db: Session = Depends(get_db)):
 
 
 # ═══════════════════════════════════════════════════════════════
+# 从CSV播种全量股票
+# ═══════════════════════════════════════════════════════════════
+@router.post("/data/seed-stock-list", response_model=APIResponse[dict])
+def seed_stock_list(db: Session = Depends(get_db)):
+    """从 stock_list.csv 加载全量 5200+ 只股票。"""
+    import csv, os
+    from app.models.stocks import Stock
+    csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'stock_list.csv')
+    if not os.path.exists(csv_path):
+        return APIResponse(code=500, message="stock_list.csv 不存在", data={})
+
+    count = 0
+    skip = 0
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sym = str(row.get('symbol', '')).strip().zfill(6)
+            name = str(row.get('name', '')).strip()
+            if not sym or not name:
+                skip += 1
+                continue
+            mkt = 'SH' if sym.startswith('6') else 'SZ' if sym.startswith(('0', '3')) else 'BJ'
+            existing = db.query(Stock).filter(Stock.symbol == sym).first()
+            if existing:
+                existing.name = name
+                skip += 1
+            else:
+                db.add(Stock(symbol=sym, name=name, market=mkt))
+                count += 1
+    db.commit()
+    return APIResponse(message="股票列表播种完成", data={"new": count, "updated": skip})
+
+
+# ═══════════════════════════════════════════════════════════════
 # 注入测试数据
 # ═══════════════════════════════════════════════════════════════
 @router.post("/data/seed-mock", response_model=APIResponse[dict])
