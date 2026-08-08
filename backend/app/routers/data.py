@@ -98,7 +98,7 @@ def seed_stock_list(db: Session = Depends(get_db)):
     """从 stock_list.csv 加载全量 5200+ 只股票。"""
     import csv, os
     from app.models.stocks import Stock
-    csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'stock_list.csv')
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'stock_list.csv')
     if not os.path.exists(csv_path):
         return APIResponse(code=500, message="stock_list.csv 不存在", data={})
 
