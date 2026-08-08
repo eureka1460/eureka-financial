@@ -98,9 +98,13 @@ def seed_stock_list(db: Session = Depends(get_db)):
     """从 stock_list.csv 加载全量 5200+ 只股票。"""
     import csv, os
     from app.models.stocks import Stock
-    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'stock_list.csv')
+    import glob
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data')
+    csv_path = os.path.join(data_dir, 'stock_list.csv')
+    # debug: 列出 data 目录下文件
+    files_found = glob.glob(os.path.join(data_dir, '*'))
     if not os.path.exists(csv_path):
-        return APIResponse(code=500, message="stock_list.csv 不存在", data={})
+        return APIResponse(code=500, message=f"data目录文件: {files_found}", data={})
 
     count = 0
     skip = 0
