@@ -33,3 +33,7 @@ Thumbs.db
 
 # WeChat
 miniprogram/.wechat_devtools/
+
+# Local generated artifacts
+artifacts/
+cloudbaserc.json
