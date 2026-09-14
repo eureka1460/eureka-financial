@@ -105,9 +105,13 @@ Page({
   },
 
   onStockTap(e) {
-    const symbol = e.detail.symbol;
+    const symbol = String((e.detail && e.detail.symbol) || '').trim();
+    if (!symbol || symbol === 'undefined' || symbol === 'null') {
+      wx.showToast({ title: '股票代码无效', icon: 'none' });
+      return;
+    }
     wx.navigateTo({
-      url: `/pages/stock/stock?symbol=${symbol}`,
+      url: `/pages/stock/stock?symbol=${encodeURIComponent(symbol)}`,
     });
   },
 });

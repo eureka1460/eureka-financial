@@ -46,7 +46,7 @@
   },
   "appid": "wx730d3823ec2edc7f",
   "projectname": "eureka-financial-research",
-  "libVersion": "2.20.1",
+  "libVersion": "3.17.0",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
     "search": {

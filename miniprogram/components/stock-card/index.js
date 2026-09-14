@@ -58,7 +58,9 @@ Component({
 
   methods: {
     onTap() {
-      this.triggerEvent('tap', { symbol: this.data.stock.symbol });
+      const symbol = String((this.data.stock && this.data.stock.symbol) || '').trim();
+      if (!symbol) return;
+      this.triggerEvent('stocktap', { symbol });
     },
   },
 });

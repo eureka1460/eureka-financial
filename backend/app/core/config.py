@@ -33,11 +33,11 @@ class Settings(BaseSettings):
             host = os.environ.get("MYSQL_HOST")
             if host:
                 from urllib.parse import quote_plus
-                pw = quote_plus(os.environ.get("MYSQL_PASSWORD", ""))
+                password = quote_plus(os.environ.get("MYSQL_PASSWORD", ""))
                 self.DATABASE_URL = (
-                    f"mysql+pymysql://{os.environ.get('MYSQL_USER','root')}:{pw}"
-                    f"@{host}:{os.environ.get('MYSQL_PORT','3306')}"
-                    f"/{os.environ.get('MYSQL_DATABASE','eureka')}"
+                    f"mysql+pymysql://{os.environ.get('MYSQL_USER', 'root')}:{password}"
+                    f"@{host}:{os.environ.get('MYSQL_PORT', '3306')}"
+                    f"/{os.environ.get('MYSQL_DATABASE', 'eureka')}"
                 )
             else:
                 self.DATABASE_URL = f"sqlite:///{PROJECT_ROOT / 'data' / 'eureka.db'}"

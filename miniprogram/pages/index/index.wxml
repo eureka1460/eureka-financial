@@ -58,7 +58,7 @@
       wx:for="{{stocks}}"
       wx:key="symbol"
       stock="{{item}}"
-      bind:tap="onStockTap"
+      bind:stocktap="onStockTap"
     />
   </view>
 

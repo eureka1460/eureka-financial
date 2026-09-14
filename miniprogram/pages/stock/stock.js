@@ -46,6 +46,15 @@ const HELP = {
   '净资产': '总资产 − 总负债。股东权益。',
 };
 
+// 比率/衍生类字段（同比、利润率、比率、每股指标等）不参与跨期累加，
+// 它们已经是各报告期自身的口径，累加后无意义。
+const NON_CUMULATIVE_FIELDS = new Set([
+  'revenue_yoy', 'net_profit_yoy',
+  'roe', 'roa', 'gross_margin', 'net_margin', 'operating_margin',
+  'current_ratio', 'quick_ratio', 'debt_to_assets', 'debt_to_equity',
+  'book_value_per_share', 'basic_eps',
+]);
+
 Page({
   data: {
     symbol: '',
@@ -87,19 +96,33 @@ Page({
     helpText: '',
   },
 
-  onLoad(options) {
-    const symbol = options.symbol || '';
-    this.setData({ symbol });
-    if (symbol) this.loadAll();
+  onLoad(options = {}) {
+    let symbol = '';
+    try {
+      symbol = decodeURIComponent(String(options.symbol || '')).trim();
+    } catch (e) {
+      symbol = '';
+    }
+
+    if (!symbol || symbol === 'undefined' || symbol === 'null') {
+      this.setData({ loading: false, error: '股票代码无效' });
+      return;
+    }
+
+    this.setData({ symbol, error: '' }, () => this.loadAll(symbol));
   },
 
   // ── 加载全部数据 ──────────────────────
-  loadAll() {
-    this.setData({ loading: true });
+  loadAll(symbol = this.data.symbol) {
+    if (!symbol) {
+      this.setData({ loading: false, error: '股票代码无效' });
+      return;
+    }
+    this.setData({ loading: true, error: '' });
     const that = this;
-    api.getStockDetail(this.data.symbol).then(detailRes => {
+    api.getStockDetail(symbol).then(detailRes => {
       const stock = detailRes.data;
-      api.getFinancials(this.data.symbol, { years: 5 }).then(finRes => {
+      api.getFinancials(symbol, { years: 5 }).then(finRes => {
         const allData = finRes.data || [];
         const mktMap = { SH: '沪市', SZ: '深市', BJ: '北交所' };
 
@@ -114,7 +137,7 @@ Page({
           } else {
             // 累加数值字段
             for (const k of Object.keys(r)) {
-              if (typeof r[k] === 'number' && !['fiscal_year','id'].includes(k)) {
+              if (typeof r[k] === 'number' && !['fiscal_year','id'].includes(k) && !NON_CUMULATIVE_FIELDS.has(k)) {
                 annualCache[fy][k] = (annualCache[fy][k] || 0) + r[k];
               }
             }
@@ -178,7 +201,7 @@ Page({
     for (let i = 1; i < allPeriods.length; i++) {
       if (allPeriods[i].fiscal_year === allPeriods[i - 1].fiscal_year) {
         for (const key of Object.keys(allPeriods[i])) {
-          if (typeof allPeriods[i][key] === 'number' && key !== 'fiscal_year') {
+          if (typeof allPeriods[i][key] === 'number' && key !== 'fiscal_year' && !NON_CUMULATIVE_FIELDS.has(key)) {
             allPeriods[i][key] = (allPeriods[i][key] || 0) + (allPeriods[i - 1][key] || 0);
           }
         }
