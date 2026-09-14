@@ -21,6 +21,37 @@ from app.models.indicators import FinancialIndicator
 logger = logging.getLogger(__name__)
 
 
+# 同花顺财务摘要中的这些字段以“百分数”返回，例如 -112.20 表示
+# -112.20%，数据库统一存为小数 -1.122，供前端 fmtPercent 使用。
+# 流动比率、速动比率和周转率是“倍数”，不能参与百分比换算。
+THS_PERCENT_FIELDS = frozenset({
+    "roe",
+    "roa",
+    "gross_margin",
+    "net_margin",
+    "operating_margin",
+    "revenue_yoy",
+    "net_profit_yoy",
+    "operating_profit_yoy",
+    "debt_to_assets",
+    "debt_to_equity",
+})
+
+
+def normalize_ths_indicator_value(db_field: str, raw) -> float:
+    """将同花顺指标转换为数据库统一口径。"""
+    value = float(
+        str(raw).strip()
+        .replace("%", "")
+        .replace("亿", "")
+        .replace("万", "")
+        .replace("元", "")
+    )
+    if db_field in THS_PERCENT_FIELDS:
+        value /= 100
+    return round(value, 6)
+
+
 class DataLoader:
     """数据入库器。
 
@@ -265,10 +296,7 @@ class DataLoader:
                     if s in ('', 'nan', 'False', 'None'):
                         continue
                     try:
-                        v = float(s.replace('%', '').replace('亿', '').replace('万', '').replace('元', ''))
-                        if any(k in cn_key for k in ('收益率', '利润率', '率', '比')):
-                            v = v / 100 if v > 1 else v
-                        ind[db_field] = round(v, 6)
+                        ind[db_field] = normalize_ths_indicator_value(db_field, s)
                     except (ValueError, TypeError):
                         pass
 
