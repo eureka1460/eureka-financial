@@ -161,6 +161,8 @@ class ValuationEngine:
                 params_sources["d0"] = "估算（EPS × 30%）"
             else:
                 params_sources["d0"] = "unavailable"
+        else:
+            params_sources["d0"] = "user_provided"
 
         n = request.forecast_years
         g1 = request.growth_rate_stage1

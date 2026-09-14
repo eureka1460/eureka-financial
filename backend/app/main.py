@@ -130,13 +130,16 @@ def health_check():
         net_ok = True
     except Exception:
         pass
+    database_backend = (
+        "mysql" if settings.DATABASE_URL.startswith("mysql") else "sqlite"
+    )
     return JSONResponse(
         content={
             "code": 200,
             "message": "ok",
             "data": {
                 "version": "0.1.0",
-                "database": settings.DATABASE_URL.split("///")[-1],
+                "database": database_backend,
                 "network": "ok" if net_ok else "blocked",
             },
         }
