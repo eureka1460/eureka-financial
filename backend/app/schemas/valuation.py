@@ -15,27 +15,27 @@ class DCFRequest(BaseModel):
     任何参数传 null 则自动从数据库填充。
     """
 
-    symbol: str = Field(..., description="股票代码")
+    symbol: str = Field(..., pattern=r"^\d{6}$", description="6位股票代码")
     fcf_base: Optional[float] = Field(
-        None, description="基期自由现金流（null=自动填充）"
+        None, allow_inf_nan=False, description="基期自由现金流（null=自动填充）"
     )
     forecast_years: int = Field(
         5, ge=1, le=20, description="可明确预测年数"
     )
     growth_rate_stage1: float = Field(
-        0.10, ge=-1.0, le=10.0, description="阶段一增长率"
+        0.10, ge=-1.0, le=10.0, allow_inf_nan=False, description="阶段一增长率"
     )
     growth_rate_terminal: float = Field(
-        0.03, ge=-1.0, le=1.0, description="永续增长率"
+        0.03, ge=-1.0, le=1.0, allow_inf_nan=False, description="永续增长率"
     )
     wacc: float = Field(
-        0.08, ge=0.001, le=1.0, description="加权平均资本成本"
+        0.08, ge=0.001, le=1.0, allow_inf_nan=False, description="加权平均资本成本"
     )
     net_debt: Optional[float] = Field(
-        None, description="净负债（null=自动填充）"
+        None, allow_inf_nan=False, description="净负债（null=自动填充）"
     )
     total_shares: Optional[float] = Field(
-        None, description="总股本（null=自动填充）"
+        None, allow_inf_nan=False, description="总股本（null=自动填充）"
     )
 
 
@@ -76,21 +76,21 @@ class DCFResponse(BaseModel):
 class DDMRequest(BaseModel):
     """DDM 估值请求。"""
 
-    symbol: str = Field(..., description="股票代码")
+    symbol: str = Field(..., pattern=r"^\d{6}$", description="6位股票代码")
     d0: Optional[float] = Field(
-        None, description="基期每股股利（null=自动填充）"
+        None, allow_inf_nan=False, description="基期每股股利（null=自动填充）"
     )
     forecast_years: int = Field(
         5, ge=1, le=20, description="可明确预测年数"
     )
     growth_rate_stage1: float = Field(
-        0.08, ge=-1.0, le=10.0, description="阶段一增长率"
+        0.08, ge=-1.0, le=10.0, allow_inf_nan=False, description="阶段一增长率"
     )
     growth_rate_terminal: float = Field(
-        0.02, ge=-1.0, le=1.0, description="永续增长率"
+        0.02, ge=-1.0, le=1.0, allow_inf_nan=False, description="永续增长率"
     )
     required_return: float = Field(
-        0.07, ge=0.001, le=1.0, description="要求回报率"
+        0.07, ge=0.001, le=1.0, allow_inf_nan=False, description="要求回报率"
     )
 
 

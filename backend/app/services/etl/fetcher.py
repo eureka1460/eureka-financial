@@ -244,24 +244,24 @@ class DataFetcher:
 
     # ── 利润表 ──────────────────────────────────
     def fetch_income_statement(self, symbol: str) -> pd.DataFrame:
-        """获取利润表。"""
+        """获取利润表累计报告期数据。"""
         em_sym = _to_em_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="income_statement",
+            func_name="income_statement_report_v2",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_profit_sheet_by_quarterly_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_profit_sheet_by_report_em(symbol=em_sym),
+            primary_fn=lambda: ak.stock_profit_sheet_by_report_em(symbol=em_sym),
+            fallback_fn=None,
         )
 
     # ── 现金流量表 ────────────────────────────────
     def fetch_cash_flow(self, symbol: str) -> pd.DataFrame:
-        """获取现金流量表。"""
+        """获取现金流量表累计报告期数据。"""
         em_sym = _to_em_symbol(symbol)
         return _fetcher_with_fallback(
-            func_name="cash_flow",
+            func_name="cash_flow_report_v2",
             symbol=symbol,
-            primary_fn=lambda: ak.stock_cash_flow_sheet_by_quarterly_em(symbol=em_sym),
-            fallback_fn=lambda: ak.stock_cash_flow_sheet_by_report_em(symbol=em_sym),
+            primary_fn=lambda: ak.stock_cash_flow_sheet_by_report_em(symbol=em_sym),
+            fallback_fn=None,
         )
 
     # ── 批量获取 ────────────────────────────────────────────
@@ -374,7 +374,7 @@ def _fetcher_with_fallback(
     func_name: str,
     symbol: str,
     primary_fn,
-    fallback_fn,
+    fallback_fn=None,
 ) -> pd.DataFrame:
     """带四级防御的通用抓取函数。
 
@@ -390,6 +390,11 @@ def _fetcher_with_fallback(
     try:
         df = _try_primary(primary_fn, symbol, func_name)
     except Exception as e:
+        if fallback_fn is None:
+            raise DataFetchException(
+                symbol=symbol,
+                detail=f"累计报告期主源失败: {e}",
+            ) from e
         logger.warning(f"{symbol}: 主源完全失败 ({e})，启动备源...")
         # L4: 备源
         try:

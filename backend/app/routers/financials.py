@@ -60,11 +60,12 @@ def get_financials(
     if report_type:
         query = query.filter(FinancialStatement.report_type == report_type)
 
-    # 年限筛选：当前年份 - years
+    # 年限筛选：包含当前年度在内的最近 N 个自然年度
     from datetime import datetime as dt
     current_year = dt.now().year
+    min_year = current_year - years + 1
     query = query.filter(
-        FinancialStatement.fiscal_year >= current_year - years
+        FinancialStatement.fiscal_year >= min_year
     )
 
     stmts = query.order_by(FinancialStatement.report_date.desc()).all()
@@ -72,22 +73,14 @@ def get_financials(
     # 批量获取对应的指标
     indicator_map = {}
     if stmts:
-        symbols = [s.symbol for s in stmts]
-        dates = [s.report_date for s in stmts]
-        types = [s.report_type for s in stmts]
-        # 逐条查询指标（SQLite 简单方式）
-        for s in stmts:
-            ind = (
-                db.query(FinancialIndicator)
-                .filter(
-                    FinancialIndicator.symbol == s.symbol,
-                    FinancialIndicator.report_date == s.report_date,
-                    FinancialIndicator.report_type == s.report_type,
-                )
-                .first()
-            )
-            if ind:
-                indicator_map[(s.symbol, s.report_date, s.report_type)] = ind
+        ind_query = db.query(FinancialIndicator).filter(
+            FinancialIndicator.symbol == symbol,
+            FinancialIndicator.fiscal_year >= min_year,
+        )
+        if report_type:
+            ind_query = ind_query.filter(FinancialIndicator.report_type == report_type)
+        for ind in ind_query.all():
+            indicator_map[(ind.symbol, ind.report_date, ind.report_type)] = ind
 
     # 组装响应
     records = []

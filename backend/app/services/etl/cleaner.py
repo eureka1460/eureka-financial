@@ -3,7 +3,7 @@
 
 对 akshare 原始 DataFrame 执行：
 1. 列名映射（中文 → 英文）
-2. 单位检测与统一（万元 → 元）
+2. 单位口径确认（东方财富报表数据按元保留）
 3. 空值处理（NaN → None）
 4. report_date 解析与 report_type 推断
 5. 数据校验（总资产 > 0，会计恒等式检查）
@@ -14,7 +14,6 @@ import logging
 from datetime import datetime, date
 
 import pandas as pd
-import numpy as np
 
 from app.core.exceptions import DataValidationException
 from app.services.etl.column_mapping import get_mapping
@@ -145,37 +144,32 @@ class DataCleaner:
         df = df.rename(columns=rename_dict)
         if not rename_dict:
             logger.warning(f"列名映射无匹配！原始列名: {list(df.columns)[:10]}")
+
+        # 不同数据源/公司类型可能同时返回同一会计科目的多个别名。
+        # 映射后按原始列顺序取第一个非空值，将别名列合并成唯一列。
+        if df.columns.duplicated().any():
+            coalesced = {}
+            for position, column in enumerate(df.columns):
+                series = df.iloc[:, position]
+                if column in coalesced:
+                    existing = coalesced[column].copy()
+                    missing = existing.isna()
+                    existing.loc[missing] = series.loc[missing]
+                    coalesced[column] = existing
+                else:
+                    coalesced[column] = series
+            df = pd.DataFrame(coalesced, index=df.index)
+
         return df
 
     # ── 步骤 2: 单位检测与转换 ────────────────────────────
     def _normalize_units(self, df: pd.DataFrame, sheet_type: str) -> pd.DataFrame:
-        """检测并统一金额单位为元。
+        """保留东方财富报表接口的元单位。
 
-        akshare 东方财富接口返回的数据单位通常是"元"，
-        但为防异常，检查关键字段的数值范围。
+        不能根据金额大小猜测单位：大型银行总资产本来就会超过万亿元，
+        以阈值判断会把已经是“元”的数据再乘 10000。未来如引入明确以
+        “万元/亿元”返回的数据源，应在对应适配器中根据单位元数据转换。
         """
-        # 用总资产（或营收）的中位数判断单位
-        check_col = None
-        if "total_assets" in df.columns:
-            check_col = "total_assets"
-        elif "operating_revenue" in df.columns:
-            check_col = "operating_revenue"
-
-        if check_col:
-            col_data = df[check_col]
-            # 如果有多个同名列，取第一列
-            if isinstance(col_data, pd.DataFrame):
-                col_data = col_data.iloc[:, 0]
-            median_val = col_data.dropna().median()
-            if pd.notna(median_val) and median_val > self.UNIT_THRESHOLD:
-                logger.warning(
-                    f"检测到疑似万元单位: {check_col} 中位数={median_val:.0f} "
-                    f"超过阈值 {self.UNIT_THRESHOLD:.0f}，自动 x10000 转换为元"
-                )
-                # 所有数值列 x 10000
-                numeric_cols = df.select_dtypes(include=[np.number]).columns
-                df[numeric_cols] = df[numeric_cols] * 10000
-
         return df
 
     # ── 步骤 3: 空值处理 ──────────────────────────────────

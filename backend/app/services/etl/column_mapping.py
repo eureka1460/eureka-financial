@@ -113,7 +113,8 @@ CASH_FLOW_MAPPING = {
     # ── 投资活动 ──
     "NETCASH_INVEST": "net_investing_cashflow",  # 投资活动现金流净额
     "INVEST_NETCASH_BALANCE": "net_investing_cashflow",
-    "CONSTRUCT_BUY_PAY": "capital_expenditure",  # 构建固定资产支付的现金（= 资本支出）
+    "CONSTRUCT_BUY_PAY": "capital_expenditure",  # 单季度接口字段
+    "CONSTRUCT_LONG_ASSET": "capital_expenditure",  # 报告期累计接口字段
     # ── 筹资活动 ──
     "NETCASH_FINANCE": "net_financing_cashflow",  # 筹资活动现金流净额
     "FINANCE_NETCASH_BALANCE": "net_financing_cashflow",

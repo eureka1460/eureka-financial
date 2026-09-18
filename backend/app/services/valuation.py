@@ -97,6 +97,11 @@ class ValuationEngine:
 
         if fcf_base is None:
             raise ValuationParameterError("无法获取基期自由现金流，请手动提供 fcf_base")
+        if fcf_base <= 0:
+            raise ValuationParameterError(
+                "基期自由现金流必须大于0；当前公司不适合直接使用永续增长DCF，"
+                "请核对数据或手动提供正常化FCF"
+            )
         if total_shares is None or total_shares <= 0:
             raise ValuationParameterError("无法获取总股本，请手动提供 total_shares")
 
@@ -171,6 +176,8 @@ class ValuationEngine:
 
         if d0 is None:
             raise ValuationParameterError("无法获取基期股利，请手动提供 d0")
+        if d0 <= 0:
+            raise ValuationParameterError("基期每股股利必须大于0，该股票可能不适合使用DDM")
         if g2 >= r:
             raise ValuationParameterError(
                 f"永续增长率({g2:.1%}) 必须小于要求回报率({r:.1%})"
@@ -257,12 +264,14 @@ class ValuationEngine:
         return float(debt) - float(cash)
 
     def _auto_fill_total_shares(self, symbol: str) -> Optional[float]:
-        """自动填充总股本。先查 stocks 表，再通过 EPS 反推。"""
+        """自动填充总股本。优先股票表和股本科目，最后才通过 EPS 反推。"""
         stock = self._get_stock(symbol)
         if stock.total_shares:
             return float(stock.total_shares)
-        # 从财报反推：总股本 = 归母净利润 / EPS
         stmt = self._get_latest_stmt(symbol)
+        if stmt and stmt.paid_in_capital and stmt.paid_in_capital > 0:
+            return float(stmt.paid_in_capital)
+        # 从财报反推：总股本 = 归母净利润 / EPS
         if stmt and stmt.basic_eps and stmt.net_profit_attr_parent:
             eps = float(stmt.basic_eps)
             profit = float(stmt.net_profit_attr_parent)
@@ -279,9 +288,16 @@ class ValuationEngine:
         if not stmt or not stmt.total_assets or not stmt.total_equity:
             return None, None
 
-        # 权益/负债权重
-        equity_weight = float(stmt.total_equity) / float(stmt.total_assets)
-        debt_weight = 1 - equity_weight
+        # 资本结构只使用有息负债，不能把应付账款、合同负债等经营负债
+        # 全部当作债务资本。当前没有实时市值时，以账面权益作为代理。
+        borrowings = (float(stmt.short_term_borrowings or 0) +
+                      float(stmt.long_term_borrowings or 0))
+        equity = float(stmt.total_equity)
+        capital = equity + borrowings
+        if capital <= 0:
+            return None, None
+        equity_weight = equity / capital
+        debt_weight = borrowings / capital
         detail.equity_weight = round(equity_weight, 4)
         detail.debt_weight = round(debt_weight, 4)
 
@@ -296,8 +312,6 @@ class ValuationEngine:
         detail.cost_of_equity = round(cost_of_equity, 4)
 
         # 税后债务成本 = (利息费用 / 有息负债) × (1 - 税率)
-        borrowings = (float(stmt.short_term_borrowings or 0) +
-                       float(stmt.long_term_borrowings or 0))
         ie = float(stmt.interest_expense or 0)
         cost_of_debt = (ie / borrowings) if borrowings > 0 and ie > 0 else 0.04
         detail.cost_of_debt = round(cost_of_debt, 4)
@@ -318,8 +332,18 @@ class ValuationEngine:
         ind = self._get_latest_indicator(symbol)
         if ind and ind.dividend_per_share is not None:
             return float(ind.dividend_per_share), "actual"
-        # 用 EPS × 30% 估算
-        stmt = self._get_latest_stmt(symbol)
+        # 用最近完整年报 EPS × 30% 估算。不能使用一季报/中报的累计 EPS，
+        # 否则会把不足一年的利润当成全年分红基础，系统性低估 DDM。
+        stmt = (
+            self.db.query(FinancialStatement)
+            .filter(
+                FinancialStatement.symbol == symbol,
+                FinancialStatement.report_type == "annual",
+                FinancialStatement.basic_eps.isnot(None),
+            )
+            .order_by(FinancialStatement.report_date.desc())
+            .first()
+        )
         if stmt and stmt.basic_eps:
             eps = float(stmt.basic_eps)
             if eps > 0:

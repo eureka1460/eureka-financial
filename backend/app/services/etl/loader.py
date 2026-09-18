@@ -52,6 +52,17 @@ def normalize_ths_indicator_value(db_field: str, raw) -> float:
     return round(value, 6)
 
 
+def calculate_free_cash_flow(operating_cashflow, capital_expenditure):
+    """FCF = 经营活动现金流量净额 - 资本性支出。
+
+    资本性支出使用“购建固定资产、无形资产和其他长期资产支付的现金”。
+    两项任一缺失时不进行猜测，返回 None。
+    """
+    if operating_cashflow is None or capital_expenditure is None:
+        return None
+    return float(operating_cashflow) - abs(float(capital_expenditure))
+
+
 class DataLoader:
     """数据入库器。
 
@@ -307,7 +318,8 @@ class DataLoader:
                 logger.error(f"{symbol} {date_str} 指标入库失败: {e}")
 
         self.db.commit()
-        # FCF = 经营CF + 投资CF净额，存到年报指标里
+        # FCF = 经营CF - 资本性支出，存到年报指标里。
+        # 投资活动现金流净额包含理财投资和投资回收，不能代替资本性支出。
         try:
             stmts = (
                 self.db.query(FinancialStatement)
@@ -316,18 +328,21 @@ class DataLoader:
                     FinancialStatement.report_type == 'annual',
                 )
                 .order_by(FinancialStatement.report_date.desc())
-                .limit(3)
                 .all()
             )
             for stmt in stmts:
-                if stmt.net_operating_cashflow is not None:
-                    ocf = float(stmt.net_operating_cashflow)
-                    invest_out = float(stmt.net_investing_cashflow or 0)
-                    self._upsert_indicator({
-                        'symbol': symbol, 'report_date': stmt.report_date,
-                        'report_type': 'annual', 'fiscal_year': stmt.fiscal_year,
-                        'fcf': ocf + invest_out,
-                    })
+                fcf = calculate_free_cash_flow(
+                    stmt.net_operating_cashflow,
+                    stmt.capital_expenditure,
+                )
+                # 即使当前缺少资本开支，也要写入 NULL，清除旧版本按错误
+                # 口径计算出的 FCF，避免估值继续读取脏数据。
+                self._upsert_indicator({
+                    'symbol': symbol, 'report_date': stmt.report_date,
+                    'report_type': 'annual', 'fiscal_year': stmt.fiscal_year,
+                    'fcf': fcf,
+                })
+            self.db.commit()
         except Exception as e:
             logger.error(f"{symbol} FCF 计算失败: {e}")
 

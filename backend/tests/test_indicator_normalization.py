@@ -1,6 +1,9 @@
 import unittest
 
-from app.services.etl.loader import normalize_ths_indicator_value
+from app.services.etl.loader import (
+    calculate_free_cash_flow,
+    normalize_ths_indicator_value,
+)
 
 
 class IndicatorNormalizationTests(unittest.TestCase):
@@ -27,6 +30,16 @@ class IndicatorNormalizationTests(unittest.TestCase):
             normalize_ths_indicator_value("current_ratio", "0.49"),
             0.49,
         )
+
+    def test_fcf_subtracts_capex_not_net_investing_cashflow(self):
+        self.assertAlmostEqual(
+            calculate_free_cash_flow(61_522_204_989.35, 3_127_594_916.41),
+            58_394_610_072.94,
+            places=2,
+        )
+
+    def test_fcf_is_unavailable_when_capex_is_missing(self):
+        self.assertIsNone(calculate_free_cash_flow(61_522_204_989.35, None))
 
 
 if __name__ == "__main__":

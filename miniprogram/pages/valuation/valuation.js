@@ -20,6 +20,14 @@ function fmoneyUnit(val) {
   return n.toFixed(2);
 }
 
+function isFiniteNumber(value) {
+  return value !== '' && Number.isFinite(Number(value));
+}
+
+function validSymbol(symbol) {
+  return /^\d{6}$/.test(String(symbol || '').trim());
+}
+
 Page({
   data: {
     symbol: '',
@@ -99,7 +107,10 @@ Page({
   onDcfInput(e) {
     const field = e.currentTarget.dataset.field;
     let val = e.detail.value;
-    if (val !== '' && field !== 'symbol') val = parseFloat(val);
+    if (val !== '' && field !== 'symbol') {
+      const parsed = Number(val);
+      val = Number.isFinite(parsed) ? parsed : '';
+    }
     const update = { [`dcfParams.${field}`]: val };
     // 股票代码同步到两个 tab
     if (field === 'symbol') {
@@ -112,7 +123,10 @@ Page({
   onDdmInput(e) {
     const field = e.currentTarget.dataset.field;
     let val = e.detail.value;
-    if (val !== '' && field !== 'symbol') val = parseFloat(val);
+    if (val !== '' && field !== 'symbol') {
+      const parsed = Number(val);
+      val = Number.isFinite(parsed) ? parsed : '';
+    }
     const update = { [`ddmParams.${field}`]: val };
     // 股票代码同步到两个 tab
     if (field === 'symbol') {
@@ -157,15 +171,20 @@ Page({
 
   onCalcDCF() {
     const p = this.data.dcfParams;
-    if (!p.symbol) {
-      wx.showToast({ title: '请输入股票代码', icon: 'none' });
+    if (!validSymbol(p.symbol)) {
+      wx.showToast({ title: '请输入6位股票代码', icon: 'none' });
+      return;
+    }
+    const requiredFields = ['forecast_years', 'growth_rate_stage1', 'growth_rate_terminal', 'wacc'];
+    if (requiredFields.some((field) => !isFiniteNumber(p[field]))) {
+      wx.showToast({ title: '请填写有效的估值参数', icon: 'none' });
       return;
     }
 
     this.setData({ loading: true, error: '', dcfDone: false });
 
     const body = {
-      symbol: p.symbol,
+      symbol: String(p.symbol).trim(),
       forecast_years: p.forecast_years,
       growth_rate_stage1: p.growth_rate_stage1,
       growth_rate_terminal: p.growth_rate_terminal,
@@ -178,8 +197,10 @@ Page({
     api.calcDCF(body)
       .then((res) => {
         const r = res.data.result;
+        const fairValue = Number(r.fair_value_per_share);
+        if (!Number.isFinite(fairValue)) throw new Error('后端返回的DCF结果无效');
         this.setData({
-          dcfFairValue: '¥' + r.fair_value_per_share.toFixed(2),
+          dcfFairValue: '¥' + fairValue.toFixed(2),
           dcfEnterpriseValue: fmoneyUnit(r.enterprise_value),
           dcfEquityValue: fmoneyUnit(r.equity_value),
           dcfPvStage1: fmoneyUnit(r.pv_stage1),
@@ -193,22 +214,27 @@ Page({
       .catch((err) => {
         this.setData({
           loading: false,
-          error: err.message || '估值计算失败',
+          error: err.detail || err.message || '估值计算失败',
         });
       });
   },
 
   onCalcDDM() {
     const p = this.data.ddmParams;
-    if (!p.symbol) {
-      wx.showToast({ title: '请输入股票代码', icon: 'none' });
+    if (!validSymbol(p.symbol)) {
+      wx.showToast({ title: '请输入6位股票代码', icon: 'none' });
+      return;
+    }
+    const requiredFields = ['forecast_years', 'growth_rate_stage1', 'growth_rate_terminal', 'required_return'];
+    if (requiredFields.some((field) => !isFiniteNumber(p[field]))) {
+      wx.showToast({ title: '请填写有效的估值参数', icon: 'none' });
       return;
     }
 
     this.setData({ loading: true, error: '', ddmDone: false });
 
     const body = {
-      symbol: p.symbol,
+      symbol: String(p.symbol).trim(),
       forecast_years: p.forecast_years,
       growth_rate_stage1: p.growth_rate_stage1,
       growth_rate_terminal: p.growth_rate_terminal,
@@ -219,8 +245,10 @@ Page({
     api.calcDDM(body)
       .then((res) => {
         const r = res.data.result;
+        const fairValue = Number(r.fair_value_per_share);
+        if (!Number.isFinite(fairValue)) throw new Error('后端返回的DDM结果无效');
         this.setData({
-          ddmFairValue: '¥' + r.fair_value_per_share.toFixed(2),
+          ddmFairValue: '¥' + fairValue.toFixed(2),
           ddmPvStage1: fmoneyUnit(r.pv_stage1),
           ddmPvTerminal: fmoneyUnit(r.pv_terminal),
           ddmInputParams: JSON.stringify(res.data.input_params, null, 2),
@@ -231,7 +259,7 @@ Page({
       .catch((err) => {
         this.setData({
           loading: false,
-          error: err.message || '估值计算失败',
+          error: err.detail || err.message || '估值计算失败',
         });
       });
   },
