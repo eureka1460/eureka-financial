@@ -164,7 +164,10 @@ class ScreenerEngine:
             # 获取最新指标值
             latest_ind = (
                 self.db.query(FinancialIndicator)
-                .filter(FinancialIndicator.symbol == symbol)
+                .filter(
+                    FinancialIndicator.symbol == symbol,
+                    FinancialIndicator.report_type == request.report_type,
+                )
                 .order_by(FinancialIndicator.report_date.desc())
                 .first()
             )
@@ -236,18 +239,13 @@ class ScreenerEngine:
         else:
             model = FinancialStatement
 
-        # 获取所有股票的最新 N 条报表
-        # 策略：用子查询 + 窗口函数
-        from sqlalchemy import text as sa_text
-
-        # 构建筛选条件
-        filter_expr = op_fn(col, value)
-
-        # 子查询：每只股票的每期报表，按日期降序排号
+        # 先对全部同类报表排序，再判断最新 N 期是否达标。
+        # 若先过滤数值再排序，旧年份达标、最新年份不达标的股票会被误选。
         rn_subq = (
             self.db.query(
                 model.symbol,
                 model.report_date,
+                col.label("metric_value"),
                 sql_func.row_number()
                 .over(
                     partition_by=model.symbol,
@@ -257,18 +255,21 @@ class ScreenerEngine:
             )
             .filter(
                 model.report_type == report_type,
-                filter_expr,
             )
             .subquery()
         )
 
-        # 对于每只股票，统计前 N 条中满足条件的数量
-        # 如果 count == consecutive_years，则该股票通过
-        matched = self.db.query(rn_subq.c.symbol).filter(
-            rn_subq.c.rn <= consecutive_years
-        ).group_by(rn_subq.c.symbol).having(
-            sql_func.count() == consecutive_years
-        ).all()
+        # NULL 不满足比较；不足 N 期也不会通过 count == N。
+        matched = (
+            self.db.query(rn_subq.c.symbol)
+            .filter(
+                rn_subq.c.rn <= consecutive_years,
+                op_fn(rn_subq.c.metric_value, value),
+            )
+            .group_by(rn_subq.c.symbol)
+            .having(sql_func.count() == consecutive_years)
+            .all()
+        )
 
         return {m[0] for m in matched}
 

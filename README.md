@@ -116,7 +116,7 @@ L4：备用数据源
 同花顺 `stock_financial_abstract_ths()` 返回 74 期预计算指标（覆盖 2007 至今所有季度），包括：
 ROE、ROA、毛利率、净利率、营业利润率、YoY 增长率、流动比率、速动比率、保守速动比率、资产负债率、权益乘数、存货周转率、应收账款周转率、总资产周转率、每股净资产、每股收益、每股经营现金流等。
 
-唯一自行计算的指标：**FCF = 经营现金流净额 + 投资活动现金流净额**。
+唯一自行计算的指标：**FCF = 经营活动现金流量净额 − 购建固定资产、无形资产和其他长期资产支付的现金（资本性支出）**。缺少资本性支出时不估算，显示为空；投资活动现金流净额不能替代资本性支出。
 
 ### 3.5 数据同步模式
 
@@ -195,7 +195,7 @@ WACC = E/(E+D) × (Rf + β × RP) + D/(E+D) × Kd × (1 − T)
 ### 5.3 实现细节
 
 - **指标分表查询**：FinancialIndicator 字段查 indicator 表，FinancialStatement 字段查 statement 表
-- **连续 N 年**：窗口函数 `ROW_NUMBER() OVER PARTITION BY symbol ORDER BY date DESC`，取前 N 条检查是否全满足
+- **连续 N 年**：先按报表类型用窗口函数 `ROW_NUMBER() OVER PARTITION BY symbol ORDER BY date DESC` 排出每只股票最近 N 期，再检查这 N 期是否全部满足阈值；旧年份达标不能替代最新年份不达标
 - **表达式计算**：查原始数据后在 Python 中 `eval()` 计算（禁 builtins 防注入）
 - **行业筛选**：先缩小候选集，再组合条件
 
