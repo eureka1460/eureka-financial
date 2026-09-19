@@ -3,5 +3,6 @@
     "stock-card": "/components/stock-card/index",
     "filter-condition": "/components/filter-condition/index"
   },
+  "onReachBottomDistance": 150,
   "navigationBarTitleText": "条件选股"
 }

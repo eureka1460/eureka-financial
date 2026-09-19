@@ -68,19 +68,24 @@
 
   <!-- 结果 -->
   <view wx:if="{{loading}}" class="loading-text">筛选中...</view>
-  <view wx:elif="{{searched}}">
+  <view wx:if="{{searched && !loading}}">
     <view class="result-header">
-      <text class="text-sm text-secondary">筛选出 <text class="text-accent font-bold">{{total}}</text> 只股票</text>
+      <text class="text-sm text-secondary">筛选出 <text class="text-accent font-bold">{{total}}</text> 只股票，已显示 {{results.length}} 只</text>
     </view>
-    <view wx:if="{{results.length === 0}}" class="empty-state">
+    <view wx:if="{{results.length === 0 && !error}}" class="empty-state">
       <text class="icon">🔍</text>
       <text class="text">没有符合条件的股票</text>
     </view>
     <stock-card wx:for="{{results}}" wx:key="symbol" stock="{{item}}" bind:stocktap="onStockTap" />
+    <view wx:if="{{hasMore}}" class="result-footer">
+      <button class="btn btn-outline" loading="{{loadingMore}}" disabled="{{loadingMore}}" bindtap="onLoadMore">{{loadingMore ? '加载中...' : error ? '加载失败，点击重试' : '加载更多'}}</button>
+    </view>
+    <view wx:elif="{{results.length > 0}}" class="result-footer text-xs text-muted">已显示全部结果</view>
   </view>
 
-  <view wx:if="{{error}}" class="empty-state">
+  <view wx:if="{{error && !hasMore}}" class="empty-state">
     <text class="icon">⚠️</text>
     <text class="text">{{error}}</text>
+    <button wx:if="{{results.length === 0}}" class="btn btn-outline" bindtap="onSearch">重试筛选</button>
   </view>
 </view>

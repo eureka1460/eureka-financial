@@ -43,8 +43,10 @@ Page({
     // 结果
     results: [],
     total: 0,
-    page: 1,
+    page: 0,
     pageSize: 20,
+    hasMore: false,
+    loadingMore: false,
 
     loading: false,
     searched: false,
@@ -153,6 +155,7 @@ Page({
       builderMetricName: '',
       builderYears: 1,
     });
+    this.resetResults();
   },
 
   onRemoveCondition(e) {
@@ -160,47 +163,92 @@ Page({
     this.setData({
       conditions: this.data.conditions.filter((_, i) => i !== idx),
     });
+    this.resetResults();
   },
 
   onToggleLogic() {
     this.setData({ logic: this.data.logic === 'AND' ? 'OR' : 'AND' });
+    this.resetResults();
   },
 
   onPickReportType(e) {
-    this.setData({ reportType: e.currentTarget.dataset.type });
+    const reportType = e.currentTarget.dataset.type;
+    if (reportType !== this.data.reportType) {
+      this.setData({ reportType });
+      this.resetResults();
+    }
   },
 
   // ── 执行筛选 ──────────────────────────
+  resetResults() {
+    this._searchToken = (this._searchToken || 0) + 1;
+    this._activeQuery = null;
+    this.setData({
+      results: [], total: 0, page: 0, hasMore: false,
+      loading: false, loadingMore: false, searched: false, error: '',
+    });
+  },
+
   onSearch() {
     if (this.data.conditions.length === 0) {
       wx.showToast({ title: '请至少添加一个条件', icon: 'none' });
       return;
     }
 
-    this.setData({ loading: true, error: '', searched: true });
-
-    api.searchScreener({
-      conditions: this.data.conditions,
+    const token = (this._searchToken || 0) + 1;
+    this._searchToken = token;
+    this._activeQuery = {
+      conditions: this.data.conditions.map(({ metric, operator, value, consecutive_years }) => ({
+        metric, operator, value, consecutive_years,
+      })),
       logic: this.data.logic,
       report_type: this.data.reportType,
-      page: 1,
       page_size: this.data.pageSize,
-    })
+    };
+    this.setData({
+      loading: true, loadingMore: false, error: '', searched: true,
+      results: [], total: 0, page: 0, hasMore: false,
+    });
+    this.loadPage(1, token);
+  },
+
+  loadPage(page, token) {
+    if (!this._activeQuery || token !== this._searchToken) return;
+    if (page > 1) this.setData({ loadingMore: true, error: '' });
+
+    api.searchScreener({ ...this._activeQuery, page })
       .then((res) => {
+        if (token !== this._searchToken) return;
         const d = res.data || {};
+        const items = Array.isArray(d.items) ? d.items : [];
+        const total = Number(d.total) || 0;
+        const results = page === 1 ? items : this.data.results.concat(items);
         this.setData({
-          results: d.items || [],
-          total: d.total || 0,
+          results,
+          total,
+          page,
+          hasMore: items.length > 0 && results.length < total,
           loading: false,
+          loadingMore: false,
         });
       })
       .catch((err) => {
+        if (token !== this._searchToken) return;
         this.setData({
           loading: false,
+          loadingMore: false,
           error: err.message || '筛选失败',
-          results: [],
         });
       });
+  },
+
+  onReachBottom() {
+    this.onLoadMore();
+  },
+
+  onLoadMore() {
+    if (this.data.loading || this.data.loadingMore || !this.data.hasMore) return;
+    this.loadPage(this.data.page + 1, this._searchToken);
   },
 
   onStockTap(e) {

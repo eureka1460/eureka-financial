@@ -40,3 +40,12 @@
 .result-header {
   padding: var(--spacing-md) var(--spacing-lg);
 }
+
+.result-footer {
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-xl);
+  text-align: center;
+}
+
+.result-footer .btn {
+  width: 100%;
+}
